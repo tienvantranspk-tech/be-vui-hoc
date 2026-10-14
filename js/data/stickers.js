@@ -53,5 +53,7 @@
     { id: 'perfect5',   emoji: '💯', name: 'Hoàn hảo',        desc: '5 chặng đạt 3 sao' },
     { id: 'pet5',       emoji: '🐾', name: 'Bạn thân',        desc: 'Thú cưng đạt cấp 5' },
     { id: 'stickers20', emoji: '📒', name: 'Album đẹp',       desc: 'Sưu tập 20 sticker' },
+    { id: 'think1',     emoji: '🧠', name: 'Nhà thám hiểm trí tuệ', desc: 'Vượt chặng Thử thách tư duy đầu tiên' },
+    { id: 'think10',    emoji: '🦉', name: 'Cú mèo thông thái', desc: 'Vượt 10 chặng Thử thách tư duy' },
   ];
 })(window.App);

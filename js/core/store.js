@@ -18,7 +18,8 @@
       days: {},           // '2026-10-13' → { sec, q, ok, stages, extra (phút bố mẹ cho thêm) }
       streak: { cur: 0, best: 0, last: null },
       // dailyLimit: số phút được học mỗi ngày (0 = không giới hạn)
-      settings: { sound: true, voice: true, autoRead: false, unlockAll: false, dailyLimit: 0 },
+      // level: 'co-ban' (đúng mức sách giáo khoa) | 'nang-cao' (thêm câu khó hơn vào mỗi chặng)
+      settings: { sound: true, voice: true, autoRead: false, unlockAll: false, dailyLimit: 0, level: 'co-ban' },
     };
   }
   const APP_ID = 'bevuihoc.lop2';

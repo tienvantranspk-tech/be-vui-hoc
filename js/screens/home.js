@@ -18,6 +18,7 @@
       el.appendChild(h('div.topbar',
         h('div.hello', h('span.wave', '👋'), ' Chào ', st.profile.name, '!'),
         h('div.spacer'),
+        st.settings.level === 'nang-cao' ? h('span.pill.lv', { title: 'Mức nâng cao' }, '🔥 Nâng cao') : null,
         App.UI.statPills()));
 
       // ---- Thú cưng ----

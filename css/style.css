@@ -364,6 +364,25 @@ b { font-weight: 700; }
 .node.locked { background: #cdd2e0; box-shadow: 0 7px 0 #a9afc3, 0 0 0 6px rgba(255, 255, 255, .6); font-size: 1.9rem; }
 .node.soon { background: #e3e6ef; box-shadow: 0 7px 0 #c3c8d8, 0 0 0 6px rgba(255, 255, 255, .5); font-size: 1.8rem; opacity: .85; }
 .node.current { animation: node-pulse 1.6s ease-in-out infinite; }
+/* Chặng thử thách tư duy: khung bo vuông, nền cam – hồng, viền vàng cho nổi bật */
+.node.bonus { border-radius: 32%; background: linear-gradient(135deg, #ff9f43, #ff6b9a); box-shadow: 0 7px 0 #c2456d, 0 0 0 6px #ffe08a; }
+.node.bonus.locked { background: #cdd2e0; box-shadow: 0 7px 0 #a9afc3, 0 0 0 6px #fff1c2; }
+.node.bonus.done { background: linear-gradient(135deg, #ffd75e, #ffb84d); box-shadow: 0 7px 0 var(--gold-dark), 0 0 0 6px #fff; }
+.stage-sheet .s-note { font-weight: 700; color: var(--orange-dark); background: #fff1e0; border-radius: 14px; padding: .35rem .8rem; margin: .2rem 0 .3rem; }
+.q-tag {
+  display: inline-block; margin-right: .5rem; padding: .1rem .65rem; border-radius: 99px; vertical-align: .12em;
+  background: #fff1e0; color: var(--orange-dark); font-family: var(--font-fun); font-weight: 800; font-size: .95rem; white-space: nowrap;
+}
+.pill.lv { background: #fff1e0; color: var(--orange-dark); }
+/* Câu nâng cao: thẻ chữ số, các phép tính có hình */
+.ncards { display: flex; gap: .7rem; justify-content: center; }
+.ncards span {
+  width: 3.6rem; height: 4.6rem; display: grid; place-items: center; border-radius: 14px;
+  background: #fff; border: 3px solid var(--sc); box-shadow: 0 5px 0 var(--sc-dark);
+  font-family: var(--font-fun); font-weight: 800; font-size: 2.6rem; color: var(--sc-dark);
+}
+.eqs { display: flex; flex-direction: column; gap: .3rem; align-items: center; font-family: var(--font-fun); font-weight: 800; font-size: clamp(2rem, 6vmin, 3rem); line-height: 1.25; white-space: nowrap; }
+.vis-geo svg .fig-part { font-family: var(--font-fun); font-weight: 800; font-size: 22px; text-anchor: middle; fill: var(--orange-dark); }
 .node-label {
   margin-top: .55rem; padding: .1rem .7rem; border-radius: 99px;
   background: rgba(255, 255, 255, .92);

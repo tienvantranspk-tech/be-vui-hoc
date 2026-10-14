@@ -25,7 +25,7 @@
       let g = 0; // chỉ số chặng trên toàn bản đồ (để đường đi uốn lượn liền mạch)
 
       sub.topics.forEach((topic) => {
-        const playable = topic.stages.filter(R.playable);
+        const playable = topic.stages.filter((s) => R.playable(s) && !s.bonus); // chặng thử thách không tính vào tiến độ
         const done = playable.filter((s) => R.done(R.key(sid, topic.id, s.id))).length;
         const tEl = h('section.topic');
 
@@ -69,6 +69,7 @@
           else if (R.done(key)) cls = 'done';
           if (isCurrent && unlocked) cls += ' current';
           if (stage.review) cls += ' review';
+          if (stage.bonus) cls += ' bonus';
 
           const node = h('button.node', { class: cls, 'aria-label': `${stage.short}: ${stage.name}` }, face);
           node.addEventListener('click', () => openStage(sub, topic, stage, { canPlay, unlocked, stars }));
@@ -122,16 +123,19 @@
     }
     if (!unlocked) {
       App.Sound.play('wrong');
-      App.UI.toast('🔒 Bé hoàn thành chặng trước để mở khóa nhé!');
+      App.UI.toast(stage.bonus ? '🔒 Bé làm xong các chặng của chủ đề này để mở Thử thách nhé!' : '🔒 Bé hoàn thành chặng trước để mở khóa nhé!');
       return;
     }
     App.Sound.play('pop');
     const count = stage.plan.reduce((s, [, n]) => s + n, 0);
+    const advanced = App.Store.state.settings.level === 'nang-cao' && stage.adv && !stage.bonus;
     const body = h('div.stage-sheet',
       h('div.s-ico', stage.icon),
       h('div.s-short', `${topic.short} · ${stage.short}`),
       h('div.modal-title', stage.name),
       h('div.s-stars', stars ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : '☆☆☆'),
+      stage.bonus ? h('div.s-note', '🧠 Câu hỏi khó, cần suy nghĩ kĩ · Không bắt buộc · Xu thưởng gấp đôi') : null,
+      advanced ? h('div.s-note', '🔥 Mức nâng cao: có thêm câu khó hơn sách giáo khoa') : null,
       h('div.modal-body', `${count} câu hỏi · khoảng ${Math.max(3, Math.round(count * 0.6))} phút`));
     App.UI.modal({
       body,

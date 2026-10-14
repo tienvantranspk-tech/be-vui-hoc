@@ -8,22 +8,67 @@
   const TRY_AGAIN = ['Chưa đúng rồi, bé thử lại nhé!', 'Gần đúng rồi, thử lần nữa nào!', 'Bình tĩnh nghĩ lại nhé!'];
 
   // Tạo bộ câu hỏi cho một chặng từ kế hoạch: plan = [[hàm tạo câu, số câu], …]
+  // Mức "Nâng cao": thay khoảng 4/10 câu bằng câu nâng cao của chủ đề (stage.adv), đặt ở cuối chặng.
   App.makeQuestions = function (stage) {
     if (stage.make) return stage.make();
-    const out = [];
+    let out = [];
     const seen = new Set();
     // Dấu hiệu nhận ra câu trùng (dạng sắp xếp: so theo đáp án, vì các ô đã bị xáo trộn)
     const sig = (q) => [q.type, q.prompt, q.big, JSON.stringify(q.answer == null ? '' : q.answer),
       JSON.stringify(q.type === 'order' ? '' : q.items || q.pairs || q.visual || '')].join('|');
-    for (const [gen, n] of stage.plan) {
-      for (let k = 0; k < n; k++) {
-        let q, tries = 0;
-        do { q = gen(); tries++; } while (seen.has(sig(q)) && tries < 30);
-        seen.add(sig(q));
-        out.push(q);
+    const make = (gen) => {
+      let q, tries = 0;
+      do { q = gen(); tries++; } while (seen.has(sig(q)) && tries < 30);
+      seen.add(sig(q));
+      return q;
+    };
+    for (const [gen, n] of stage.plan) for (let k = 0; k < n; k++) out.push(make(gen));
+    if (stage.shuffle) out = App.U.shuffle(out);
+    if (stage.bonus) out.forEach((q) => { q.tag = '🧠 Thử thách'; });
+    const st = App.Store.state;
+    const adv = !stage.bonus && st && st.settings.level === 'nang-cao' && stage.adv;
+    if (adv && (adv.cur.length || adv.prev.length)) {
+      const k = Math.max(2, Math.round(out.length * 0.4));
+      const drop = new Set(App.U.sample(out.map((_, i) => i), k));
+      // ưu tiên dạng nâng cao của chủ đề đang học, không lặp một dạng khi còn dạng khác
+      const cur = App.U.shuffle(adv.cur), prev = App.U.shuffle(adv.prev);
+      const extra = [];
+      for (let j = 0; j < k; j++) {
+        const fromCur = cur.length && (!prev.length || Math.random() < 0.75);
+        const list = fromCur ? cur : prev;
+        const q = make(list[j % list.length]);
+        q.tag = '🔥 Nâng cao';
+        extra.push(q);
       }
+      out = out.filter((_, i) => !drop.has(i)).concat(extra);
     }
-    return stage.shuffle ? App.U.shuffle(out) : out;
+    return out;
+  };
+
+  // Gắn câu nâng cao vào các chặng của một môn và thêm chặng "🧠 Thử thách tư duy" ở cuối mỗi chủ đề.
+  // pools: { idChủĐề: [[hàm tạo câu, idChặng bắt đầu dùng được], …] }
+  // whole: { idChủĐề: [hàm tạo câu, …] } – chủ đề ôn tập: dùng được tất cả ngay từ chặng đầu
+  App.attachAdvanced = function (subject, pools, whole = {}) {
+    const prev = []; // các dạng nâng cao của những chủ đề đã học trước
+    // Lấy lần lượt từng dạng (xáo trộn), hết lượt thì xáo lại → các câu trong chặng ít trùng dạng
+    const mix = (list) => { let bag = []; return () => { if (!bag.length) bag = App.U.shuffle(list); return bag.pop()(); }; };
+    subject.topics.forEach((topic) => {
+      const list = pools[topic.id] || [];
+      const all = whole[topic.id] || list.map(([g]) => g);
+      const main = topic.stages.filter((s) => App.Rewards.playable(s) && !s.bonus);
+      main.forEach((stage, i) => {
+        const cur = whole[topic.id] ? all.slice()
+          : list.filter(([, from]) => { const k = main.findIndex((s) => s.id === from); return k >= 0 && k <= i; }).map(([g]) => g);
+        stage.adv = { cur, prev: prev.slice() };
+      });
+      let pool = all.slice();
+      if (pool.length < 6) pool = pool.concat(App.U.sample(prev.filter((g) => !pool.includes(g)), 6 - pool.length));
+      if (pool.length && main.length && !topic.stages.some((s) => s.bonus)) {
+        topic.stages.push({ id: 'tt-' + topic.id, short: '🧠 Thử thách', name: `Thử thách tư duy: ${topic.name}`, icon: '🧠',
+          bonus: true, shuffle: true, plan: [[mix(pool), 8]] });
+      }
+      if (!whole[topic.id]) list.forEach(([g]) => { if (!prev.includes(g)) prev.push(g); });
+    });
   };
 
   // Đáp án điền vào ô "?" và đáp án để báo cho bé (có thể kèm đơn vị, hoặc tên hình "Hình 2")
@@ -49,7 +94,7 @@
     .replace(/(\d|\()\s*l(?!\p{L})/gu, '$1 lít');
   // Những loại hình nên đặt bên trái, phần trả lời bên phải khi máy xoay ngang
   const SPLIT = new Set(['balance', 'balances', 'bottles', 'cups', 'jars', 'clock', 'digital', 'calendar',
-    'geo', 'ruler', 'shapes', 'grid', 'vertical', 'blocks', 'tenframe', 'scatter', 'bag', 'picto', 'money', 'listen', 'pic']);
+    'geo', 'ruler', 'shapes', 'grid', 'vertical', 'blocks', 'tenframe', 'scatter', 'bag', 'picto', 'money', 'listen', 'pic', 'svg']);
 
   App.Engine = {
     // root: vùng chơi; opts: { questions, bar, pet, comboEl, onFinish({ total, firstTry }) }
@@ -72,7 +117,7 @@
         const lang = q.lang || 'vi';
         area.appendChild(h('div.q-head',
           h('button.icon-btn', { 'aria-label': 'Đọc đề', onclick: () => talk(speakText(q), lang) }, '🔊'),
-          h('div.q-prompt', q.prompt)));
+          h('div.q-prompt', q.tag ? h('span.q-tag', q.tag) : null, q.prompt)));
         const left = h('div.q-left');
         rightCol = h('div.q-right');
         if (q.passage) {

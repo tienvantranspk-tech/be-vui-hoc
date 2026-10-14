@@ -101,6 +101,9 @@
         h('div.p-bar', h('i', { style: { width: s.p + '%', background: s.p >= 80 ? 'var(--good)' : s.p >= 60 ? 'var(--gold)' : 'var(--bad)' } }))))
         : h('p.muted', 'Chưa đủ dữ liệu. Bé làm thêm vài chặng nhé!')));
 
+    // Mức độ câu hỏi
+    wrap.appendChild(levelCard());
+
     // Giới hạn thời gian mỗi ngày
     wrap.appendChild(limitCard());
 
@@ -173,6 +176,30 @@
       : 'Cần mở app từ địa chỉ https trên mạng (xem hướng dẫn trong README) thì mới cài được.')));
   }
 
+  // ---- Mức độ câu hỏi: Cơ bản (theo SGK) / Nâng cao ----
+  function levelCard() {
+    const st = App.Store.state;
+    const card = h('div.p-card');
+    const draw = () => {
+      const lv = st.settings.level || 'co-ban';
+      const ch = R.challengeSummary();
+      card.innerHTML = '';
+      App.U.add(card, [
+        h('h3', '🎚️ Mức độ câu hỏi'),
+        h('div.chips', [['co-ban', '📗 Cơ bản (theo SGK)'], ['nang-cao', '🔥 Nâng cao']].map(([id, label]) => h('button.chip', {
+          class: id === lv ? 'on' : '',
+          onclick: () => { App.Sound.play('tap'); st.settings.level = id; App.Store.save(); draw(); },
+        }, label))),
+        h('p.muted', { style: { marginTop: '.6rem' } }, lv === 'nang-cao'
+          ? 'Nâng cao: mỗi chặng có khoảng 4/10 câu khó hơn sách giáo khoa – tìm số chưa biết, bài toán hai bước, điền dấu, so sánh biểu thức, câu đố logic; Tiếng Việt có từ trái nghĩa, tục ngữ, tìm từ viết sai…; Tiếng Anh có chọn từ viết đúng, ngữ pháp, nghe câu không có hình. Câu nâng cao có nhãn 🔥.'
+          : 'Cơ bản: câu hỏi đúng mức sách giáo khoa. Chọn “Nâng cao” nếu bé đã làm tốt và muốn thử sức hơn.'),
+        h('p.muted', { style: { marginTop: '.4rem' } },
+          `🧠 Cuối mỗi chủ đề có chặng “Thử thách tư duy” (không bắt buộc, xu thưởng gấp đôi). Bé đã vượt ${ch.done}/${ch.total} chặng thử thách.`)]);
+    };
+    draw();
+    return card;
+  }
+
   // ---- Giới hạn thời gian học mỗi ngày ----
   function limitCard() {
     const st = App.Store.state;
@@ -182,7 +209,7 @@
       const used = Math.round(R.today().sec / 60);
       const extra = R.today().extra || 0;
       card.innerHTML = '';
-      card.append(
+      App.U.add(card, [
         h('h3', '⏰ Giới hạn thời gian mỗi ngày'),
         h('div.chips', [0, 15, 20, 30, 45, 60].map((m) => h('button.chip', {
           class: m === lim ? 'on' : '',
@@ -193,7 +220,7 @@
           : 'App không giới hạn thời gian. Chọn số phút để bé không ngồi quá lâu.'),
         lim ? h('div.p-actions', h('button.btn.small.orange', {
           onclick: () => { R.addExtraTime(15); App.Sound.play('coin'); App.UI.toast('✅ Đã cho bé thêm 15 phút hôm nay'); draw(); },
-        }, '➕ Cho thêm 15 phút hôm nay')) : null);
+        }, '➕ Cho thêm 15 phút hôm nay')) : null]); // App.U.add bỏ qua null
     };
     draw();
     return card;

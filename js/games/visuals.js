@@ -27,6 +27,8 @@
   };
   // Hình minh họa dựng sẵn (emoji / SVG): { kind:'pic', html }
   V.pic = (v) => wrap('tpic', v.html);
+  // Hình vẽ SVG dựng sẵn, khung trắng như hình học: { kind:'svg', svg }
+  V.svg = (v) => wrap('vis-geo', v.svg);
 
   // ================= Số và phép tính =================
 

@@ -39,6 +39,21 @@ Muốn chuyển sang máy khác thì dùng **Sao lưu dữ liệu** trong Góc p
 - [x] **Bước 5 – Góc phụ huynh nâng cao:** giới hạn thời gian học mỗi ngày (hết giờ hiện màn hình nghỉ ngơi, bố mẹ cho thêm giờ được),
       ôn lại câu sai (nút “🔁 Ôn lại câu sai” ở trang chủ), sao lưu / khôi phục dữ liệu ra tệp.
 - [x] **Bước 6 – Đưa lên máy tính bảng:** cài như app thật (PWA) – có biểu tượng riêng, mở toàn màn hình, chơi được khi không có mạng.
+- [x] **Nâng cao:** nút chọn mức độ **Cơ bản / Nâng cao** trong Góc phụ huynh, và chặng **🧠 Thử thách tư duy** ở cuối mỗi chủ đề
+      (27 chặng: Toán 14, Tiếng Việt 9, Tiếng Anh 4) – xem mục [Mức độ câu hỏi](#mức-độ-câu-hỏi).
+
+## Mức độ câu hỏi
+
+- **Cơ bản (mặc định):** đúng mức sách giáo khoa – chủ yếu nhận biết, hiểu và vận dụng trực tiếp (mức 1–2 theo cách đánh giá của Bộ).
+- **🔥 Nâng cao** (bật trong Góc phụ huynh → 🎚️ Mức độ câu hỏi): mỗi chặng thay khoảng 4/10 câu bằng câu khó hơn sách, có nhãn 🔥.
+  - Toán: tìm số chưa biết, bài toán hai bước, bài toán ngược, điền dấu + −, so sánh hai biểu thức, tính nhanh, dãy số quy luật,
+    lập số từ thẻ chữ số, câu đố "hình thay số", đếm hình tam giác – tứ giác, giờ và lịch, bài toán về tuổi, chắc chắn – có thể – không thể…
+  - Tiếng Việt: tìm từ khác loại, từ trái nghĩa – cùng nghĩa, hoàn thành tục ngữ, bộ phận câu trả lời câu hỏi Ai? Làm gì? Thế nào? Ở đâu? Khi nào?,
+    tìm từ viết sai chính tả, sắp xếp câu thành đoạn văn, giải câu đố, từ tả âm thanh.
+  - Tiếng Anh: tìm từ khác loại, chọn từ viết đúng, ngữ pháp (is/are, a/an, can/do…), nghe câu chọn câu đúng (không có hình),
+    đọc câu chọn hình, hỏi – đáp của nhiều Unit, làm tính bằng tiếng Anh.
+- **🧠 Thử thách tư duy:** chặng cuối mỗi chủ đề, toàn câu nâng cao. Không bắt buộc (không chặn chặng sau), xu thưởng gấp đôi,
+  có huy hiệu “Nhà thám hiểm trí tuệ” và “Cú mèo thông thái”.
 
 ## Đưa app lên máy tính bảng
 
@@ -77,6 +92,7 @@ Dữ liệu của bé không mất khi cập nhật app. Nên **sao lưu** đị
 
 Vào bằng nút **Phụ huynh** ở thanh dưới cùng, trả lời một phép nhân để mở khóa.
 - **Theo dõi:** thời gian học hôm nay và 7 ngày qua, tiến độ từng môn, kỹ năng bé cần luyện thêm, các câu bé làm sai gần đây.
+- **🎚️ Mức độ câu hỏi:** Cơ bản (theo SGK) hoặc Nâng cao (thêm câu khó hơn vào mỗi chặng).
 - **⏰ Giới hạn thời gian:** chọn 15 / 20 / 30 / 45 / 60 phút mỗi ngày. Hết giờ, app hiện màn hình nghỉ ngơi
   (chặng đang chơi dở vẫn được làm nốt). Bấm **Cho thêm 15 phút hôm nay** nếu muốn bé học thêm.
 - **🔁 Ôn lại câu sai:** các câu bé làm sai được lưu lại; ở trang chủ có nút “Ôn lại câu sai” để bé làm lại.
@@ -108,6 +124,8 @@ tai-lieu/               Bản đồ chương trình lớp 2 (mục lục 3 môn,
 - `js/subjects/toan-gen.js` (Chủ đề 1–2) và `js/subjects/toan-gen2.js` (Chủ đề 3–7): cách tạo từng dạng câu hỏi.
   Mỗi lần chơi, câu hỏi được tạo ngẫu nhiên nên bé luyện bao nhiêu lần cũng có bài mới.
 - `js/subjects/toan-gen3.js` (Chủ đề 8–14): câu hỏi học kì 2.
+- `js/subjects/toan-nangcao.js`: câu hỏi nâng cao và chặng Thử thách của từng chủ đề
+  (tương tự: `tiengviet-nangcao.js`, `tienganh-nangcao.js`).
 - `js/games/visuals.js`: các hình minh họa (khung 10 ô, tia số, cân đĩa, can nước, đồng hồ, tờ lịch, thước kẻ, hình học,
   khối trăm, tờ tiền, biểu đồ tranh…).
 

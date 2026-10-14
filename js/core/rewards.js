@@ -9,12 +9,13 @@
   R.key = (subjectId, topicId, stageId) => `${subjectId}/${topicId}/${stageId}`;
   R.playable = (stage) => !!(stage.plan || stage.make);
 
-  // Tất cả các chặng chơi được của một môn, theo đúng thứ tự trên bản đồ
-  R.stages = (subject) => {
+  // Các chặng chơi được của một môn, theo đúng thứ tự trên bản đồ.
+  // Chặng "🧠 Thử thách" (bonus) không bắt buộc: không tính vào tiến độ, không chặn chặng sau.
+  R.stages = (subject, { all = false } = {}) => {
     const out = [];
     for (const t of subject.topics) {
       for (const s of t.stages) {
-        if (R.playable(s)) out.push({ subject, topic: t, stage: s, key: R.key(subject.id, t.id, s.id) });
+        if (R.playable(s) && (all || !s.bonus)) out.push({ subject, topic: t, stage: s, key: R.key(subject.id, t.id, s.id) });
       }
     }
     return out;
@@ -23,24 +24,41 @@
   R.starsOf = (key) => (S().progress[key] ? S().progress[key].stars : 0);
   R.isUnlocked = (subject, key) => {
     if (S().settings.unlockAll) return true;
-    const list = R.stages(subject);
+    const list = R.stages(subject, { all: true });
     const i = list.findIndex((x) => x.key === key);
     if (i < 0) return false;
-    return i === 0 || R.done(list[i - 1].key);
+    // mở khi chặng chính (không phải thử thách) đứng ngay trước đã xong
+    for (let j = i - 1; j >= 0; j--) if (!list[j].stage.bonus) return R.done(list[j].key);
+    return true;
   };
   R.currentKey = (subject) => {
     const x = R.stages(subject).find((s) => !R.done(s.key));
     return x ? x.key : null;
   };
+  // Chặng tiếp theo: gợi ý cả chặng thử thách nếu bé chưa chơi
   R.nextStage = (subject, key) => {
-    const list = R.stages(subject);
+    const list = R.stages(subject, { all: true });
     const i = list.findIndex((x) => x.key === key);
-    return i >= 0 ? list[i + 1] || null : null;
+    if (i < 0) return null;
+    for (let j = i + 1; j < list.length; j++) if (!list[j].stage.bonus || !R.done(list[j].key)) return list[j];
+    return null;
   };
   R.totalStars = (subjectId) => {
     let t = 0;
     for (const k in S().progress) if (!subjectId || k.startsWith(subjectId + '/')) t += S().progress[k].stars || 0;
     return t;
+  };
+  // Số chặng thử thách đã vượt / tổng số (cả ba môn)
+  R.challengeSummary = () => {
+    let done = 0, total = 0;
+    for (const sid of Object.keys(App.Curriculum || {})) {
+      for (const x of R.stages(App.Curriculum[sid], { all: true })) {
+        if (!x.stage.bonus) continue;
+        total++;
+        if (R.done(x.key)) done++;
+      }
+    }
+    return { done, total };
   };
   R.summary = (subject) => {
     const list = R.stages(subject);
@@ -172,11 +190,12 @@
       last: Date.now(),
     };
 
-    // Xu: 1 xu mỗi câu đúng ngay + 2 xu mỗi sao + 5 xu khi qua chặng lần đầu + 10 xu cho chặng đầu tiên trong ngày
+    // Xu: 1 xu mỗi câu đúng ngay + 2 xu mỗi sao + 5 xu khi qua chặng lần đầu + 10 xu cho chặng đầu tiên trong ngày.
+    // Chặng thử thách: xu thưởng gấp đôi.
     const day = R.today();
     const dailyBonus = day.stages === 0 ? 10 : 0;
     day.stages++;
-    let coins = firstTry + stars * 2 + (firstClear ? 5 : 0) + dailyBonus;
+    let coins = (firstTry + stars * 2 + (firstClear ? 5 : 0)) * (stage.bonus ? 2 : 1) + dailyBonus;
 
     R.touchStreak();
 
@@ -309,7 +328,7 @@
     for (const sid of Object.keys(App.Curriculum || {})) {
       const sub = App.Curriculum[sid];
       for (const t of sub.topics) {
-        if (t.stages.some(R.playable)) list.push(R.badgeInfo(R.topicBadgeId(sub, t)));
+        if (t.stages.some((s) => R.playable(s) && !s.bonus)) list.push(R.badgeInfo(R.topicBadgeId(sub, t)));
       }
     }
     return list;
@@ -338,8 +357,11 @@
     if (Object.values(st.progress).filter((p) => p.stars === 3).length >= 5) give('perfect5');
     if (st.pet && R.petLevel(st.pet) >= 5) give('pet5');
     if (Object.keys(st.stickers).length >= 20) give('stickers20');
+    const ch = R.challengeSummary();
+    if (ch.done >= 1) give('think1');
+    if (ch.done >= 10) give('think10');
     if (subject && topic) {
-      const all = topic.stages.filter(R.playable);
+      const all = topic.stages.filter((s) => R.playable(s) && !s.bonus);
       if (all.length && all.every((s) => R.done(R.key(subject.id, topic.id, s.id)))) give(R.topicBadgeId(subject, topic));
     }
     return earned;
