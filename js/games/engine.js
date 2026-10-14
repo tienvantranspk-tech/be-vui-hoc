@@ -103,6 +103,7 @@
     // root: vùng chơi; opts: { questions, bar, pet, comboEl, onFinish({ total, firstTry }) }
     start(root, opts) {
       const qs = opts.questions;
+      const startedAt = Date.now();
       let i = 0, attempts = 0, firstTry = 0, combo = 0, advFirstTry = 0; // advFirstTry: câu nâng cao làm đúng ngay
       let ctrl = null, slot = null, timer = null, busy = false, finished = false, rightCol = null, placeholder = '?';
       const area = h('div.q-area');
@@ -113,6 +114,8 @@
         const q = qs[i];
         attempts = 0;
         busy = false;
+        q._t0 = Date.now(); // đo thời gian từ lúc hiện câu hỏi đến lần trả lời đầu tiên
+        q._ms = null;
         if (ctrl && ctrl.destroy) ctrl.destroy();
         area.innerHTML = '';
         area.scrollTop = 0;
@@ -170,6 +173,7 @@
       function submit(value) {
         if (busy || finished) return;
         const q = qs[i];
+        if (q._ms == null) q._ms = Date.now() - q._t0;
         const ok = App.QTypes[q.type].check(q, value);
         ctrl.showResult(ok, value);
         if (ok) { success(attempts === 0); return; }
@@ -199,6 +203,8 @@
       // Dạng tự chấm (nối cặp) báo đã xong
       function done(firstTryOk) {
         if (busy || finished) return;
+        const q = qs[i];
+        if (q._ms == null) q._ms = Date.now() - q._t0;
         success(firstTryOk);
       }
 
@@ -267,7 +273,8 @@
           opts.bar.style.width = '100%';
           if (ctrl && ctrl.destroy) ctrl.destroy();
           const advTotal = qs.filter((x) => x.lv === 'nc').length;
-          setTimeout(() => opts.onFinish({ total: qs.length, firstTry, advTotal, advFirstTry }), 350);
+          const sec = Math.min(3600, Math.round((Date.now() - startedAt) / 1000)); // thời gian làm cả chặng
+          setTimeout(() => opts.onFinish({ total: qs.length, firstTry, advTotal, advFirstTry, sec }), 350);
         } else {
           setTimeout(show, 120);
         }

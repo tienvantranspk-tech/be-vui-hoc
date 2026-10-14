@@ -15,9 +15,20 @@
     let lastTouch = Date.now();
     ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { lastTouch = Date.now(); }, { passive: true }));
     const warned = {}; // nhắc giờ: mỗi mốc chỉ nhắc một lần
+    // Thời gian được tính vào môn bé đang học (bản đồ, chặng chơi, kết quả), ôn câu sai, thú cưng – sticker, hoặc mục khác
+    const timeCategory = () => {
+      const top = App.Router.top();
+      if (!top) return 'other';
+      const sid = top.params && top.params.subject;
+      if (['play', 'result', 'map'].includes(top.name) && ['toan', 'tv', 'ta', 'review'].includes(sid)) return sid;
+      if (top.name === 'pet' || top.name === 'album') return 'pet';
+      return 'other';
+    };
+    // Bố mẹ xem Góc phụ huynh, hoặc màn hình nghỉ khi hết giờ: không tính là thời gian bé học
+    const notCounted = () => { const top = App.Router.top(); return !!top && ['parent', 'rest', 'setup'].includes(top.name); };
     setInterval(() => {
-      if (document.visibilityState === 'visible' && Date.now() - lastTouch < 90000 && App.Store.state.profile) {
-        App.Rewards.addTime(15);
+      if (document.visibilityState === 'visible' && Date.now() - lastTouch < 90000 && App.Store.state.profile && !notCounted()) {
+        App.Rewards.addTime(15, timeCategory());
         App.Store.save();
         checkLimit();
       }

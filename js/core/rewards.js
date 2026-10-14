@@ -77,32 +77,54 @@
     const days = S().days;
     return days[k] || (days[k] = { sec: 0, q: 0, ok: 0, stages: 0 });
   };
-  R.addTime = (sec) => { R.today().sec += sec; };
+  // Tổng hợp của tuần hiện tại (giữ lâu hơn số liệu từng ngày)
+  R.week = () => {
+    const k = U.weekKey();
+    const weeks = S().weeks;
+    const w = weeks[k] || (weeks[k] = { sec: 0, q: 0, ok: 0, stages: 0, dset: {}, sub: {}, lv: {} });
+    w.dset[U.dayKey()] = 1;
+    return w;
+  };
+  // cat: bé đang dùng thời gian vào đâu – toan, tv, ta, review (ôn câu sai), pet (thú cưng, sticker), other
+  R.addTime = (sec, cat = 'other') => {
+    const d = R.today(), w = R.week();
+    d.sec += sec;
+    w.sec += sec;
+    d.sub = d.sub || {};
+    d.sub[cat] = (d.sub[cat] || 0) + sec;
+    w.sub[cat] = (w.sub[cat] || 0) + sec;
+  };
   R.recordAnswer = (q, ok) => {
     const st = S();
     const sk = q.skill || 'khac';
-    const day = R.today();
+    const day = R.today(), wk = R.week();
     day.q++;
-    if (ok) day.ok++;
+    wk.q++;
+    if (ok) { day.ok++; wk.ok++; }
     // Số liệu đánh giá năng lực: không tính câu ôn lại (bé đã xem đáp án trước đó)
     if (!q._review) {
       const rec = st.skills[sk] || (st.skills[sk] = { n: 0, ok: 0 });
       rec.n++;
       if (ok) rec.ok++;
       if (q._sid) {
-        const lv = day.lv || (day.lv = {});
+        // [số câu, đúng ngay, tổng ms đến lần trả lời đầu, số câu sai mà trả lời rất nhanh (dưới 3 giây – có thể đoán mò)]
         const k = `${q._sid}.${q.lv === 'nc' ? 'nc' : 'cb'}`; // ví dụ 'toan.cb', 'tv.nc'
-        const a = lv[k] || (lv[k] = [0, 0]);
-        a[0]++;
-        if (ok) a[1]++;
+        const ms = Math.min(q._ms || 0, 120000);
+        const fast = !ok && q._ms != null && q._ms < 3000 ? 1 : 0;
+        for (const bucket of [day.lv || (day.lv = {}), wk.lv]) {
+          const a = bucket[k] || (bucket[k] = [0, 0, 0, 0]);
+          a[0]++;
+          if (ok) a[1]++;
+          a[2] = (a[2] || 0) + ms;
+          a[3] = (a[3] || 0) + fast;
+        }
       }
-    }
+    } else if (ok) st.counters.fixed++;
     const key = R.mistakeKey(q);
     if (!ok) {
       // Ghi câu sai (mỗi câu chỉ giữ một bản, mới nhất lên đầu)
       const copy = JSON.parse(JSON.stringify(q));
-      delete copy._review;
-      delete copy._sid;
+      ['_review', '_sid', '_t0', '_ms'].forEach((f) => { delete copy[f]; });
       st.mistakes = st.mistakes.filter((m) => R.mistakeKey(m.q) !== key);
       st.mistakes.unshift({ t: Date.now(), skill: sk, sid: q._sid || null, q: copy });
       if (st.mistakes.length > 60) st.mistakes.length = 60;
@@ -142,11 +164,12 @@
     return out;
   };
   // Ôn xong: thưởng xu (1 xu mỗi câu sửa đúng + 3 xu chăm chỉ), thú cưng vui hơn
-  R.completeReview = function ({ total, firstTry }) {
+  R.completeReview = function ({ total, firstTry, sec = 0 }) {
     const st = S();
     const coins = firstTry + 3;
     st.coins += coins;
     R.touchStreak();
+    R.logPlay({ sid: 'review', tid: '', id: 'review', n: total, ok: firstTry, an: 0, ao: 0, s: R.starsFor(total, firstTry), sec, nw: false });
     let levelUp = false;
     const pet = st.pet;
     if (pet) {
@@ -158,6 +181,13 @@
     }
     App.Store.save();
     return { stars: R.starsFor(total, firstTry), coins, gifts: [], badges: [], levelUp, petLevel: pet ? R.petLevel(pet) : 0, left: R.mistakeCount() };
+  };
+
+  // Ghi lại một lần chơi chặng (để xem lịch sử, báo cáo tuần, xu hướng)
+  R.logPlay = (entry) => {
+    const st = S();
+    st.history.unshift({ t: Date.now(), ...entry });
+    if (st.history.length > 400) st.history.length = 400;
   };
 
   // ===== Đánh giá năng lực: tách câu cơ bản (theo SGK) và câu nâng cao, theo từng môn =====
@@ -223,7 +253,7 @@
   };
 
   // ===== Hoàn thành một chặng → tính phần thưởng =====
-  R.completeStage = function ({ subject, topic, stage, total, firstTry, advTotal = 0, advFirstTry = 0 }) {
+  R.completeStage = function ({ subject, topic, stage, total, firstTry, advTotal = 0, advFirstTry = 0, sec = 0 }) {
     const st = S();
     const key = R.key(subject.id, topic.id, stage.id);
     const prev = st.progress[key];
@@ -246,6 +276,8 @@
     const day = R.today();
     const dailyBonus = day.stages === 0 ? 10 : 0;
     day.stages++;
+    R.week().stages++;
+    R.logPlay({ sid: subject.id, tid: topic.id, id: stage.id, n: total, ok: firstTry, an: advTotal, ao: advFirstTry, s: stars, sec, nw: firstClear });
     const advBonus = stage.bonus ? 0 : advFirstTry;
     let coins = (firstTry + stars * 2 + (firstClear ? 5 : 0) + advBonus) * (stage.bonus ? 2 : 1) + dailyBonus;
 

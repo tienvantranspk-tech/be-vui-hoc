@@ -35,6 +35,13 @@ window.App = window.App || {};
     const p = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   };
+  // Tuần tính từ thứ Hai: trả về ngày thứ Hai của tuần chứa ngày d ('2026-10-12')
+  U.weekKey = (d = new Date()) => {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return U.dayKey(x);
+  };
+  U.addDays = (key, n) => { const [y, m, d] = key.split('-').map(Number); return U.dayKey(new Date(y, m - 1, d + n)); };
   U.daysBetween = (fromKey, toKey) => {
     const t = (k) => { const [y, m, d] = k.split('-').map(Number); return Date.UTC(y, m - 1, d); };
     return Math.round((t(toKey) - t(fromKey)) / 86400000);

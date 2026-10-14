@@ -40,8 +40,11 @@ Muốn chuyển sang máy khác thì dùng **Sao lưu dữ liệu** trong Góc p
       ôn lại câu sai (nút “🔁 Ôn lại câu sai” ở trang chủ), sao lưu / khôi phục dữ liệu ra tệp.
 - [x] **Bước 6 – Đưa lên máy tính bảng:** cài như app thật (PWA) – có biểu tượng riêng, mở toàn màn hình, chơi được khi không có mạng.
 - [x] **Nâng cao:** câu nâng cao được **trộn lẫn** với câu cơ bản trong mỗi chặng, chặng **🧠 Thử thách tư duy** ở cuối mỗi chủ đề
-      (27 chặng: Toán 14, Tiếng Việt 9, Tiếng Anh 4), và thẻ **📊 Đánh giá năng lực** chấm riêng câu cơ bản – câu nâng cao
+      (27 chặng: Toán 14, Tiếng Việt 9, Tiếng Anh 4), chấm riêng câu cơ bản – câu nâng cao
       cho từng môn – xem mục [Mức độ câu hỏi](#mức-độ-câu-hỏi).
+- [x] **Bảng đánh giá cho phụ huynh:** 5 thẻ Tổng quan · Theo môn · Tiến bộ · Báo cáo tuần · Cài đặt – so sánh với tuần trước,
+      xếp loại từng môn, năng lực – phẩm chất, so với tiến độ ở lớp, gợi ý tuần này, biểu đồ nhiều tuần, lịch học 12 tuần,
+      mục tiêu tuần, báo cáo tuần lưu thành ảnh / gửi Zalo – xem mục [Góc phụ huynh](#góc-phụ-huynh).
 
 ## Mức độ câu hỏi
 
@@ -51,7 +54,7 @@ Góc phụ huynh → 🎚️ Mức độ câu hỏi:
 - **🔥 Trộn nhiều:** xen khoảng 5/10 câu nâng cao.
 
 Số sao của chặng chỉ tính theo câu cơ bản (mức nắm bài); mỗi câu nâng cao làm đúng ngay được thêm 1 xu.
-Thẻ **📊 Đánh giá năng lực** chấm riêng từng môn:
+Góc phụ huynh (thẻ **📊 Tổng quan** và **📚 Theo môn**) chấm riêng từng môn:
 - Câu cơ bản: từ 85% đúng ngay là *Hoàn thành tốt*, 65–84% *Hoàn thành*, dưới 65% *Cần cố gắng* (cần ít nhất 10 câu).
 - Câu nâng cao: từ 70% *Xuất sắc*, 45–69% *Khá*, dưới 45% *Đang làm quen* (cần ít nhất 6 câu).
 - Kèm tỉ lệ 7 ngày gần nhất, nhận xét và gợi ý kỹ năng nên luyện. Các câu bé làm lại ở "Ôn lại câu sai" không được tính.
@@ -102,18 +105,37 @@ Dữ liệu của bé không mất khi cập nhật app. Nên **sao lưu** đị
 
 ## Góc phụ huynh
 
-Vào bằng nút **Phụ huynh** ở thanh dưới cùng, trả lời một phép nhân để mở khóa.
-- **Theo dõi:** thời gian học hôm nay và 7 ngày qua, tiến độ từng môn, kỹ năng bé cần luyện thêm, các câu bé làm sai gần đây.
-- **📊 Đánh giá năng lực:** mỗi môn chấm riêng câu cơ bản và câu nâng cao, có xếp loại, tỉ lệ 7 ngày qua và nhận xét.
-- **🎚️ Mức độ câu hỏi:** Chỉ cơ bản / Trộn vừa / Trộn nhiều câu nâng cao.
-- **⏰ Giới hạn thời gian:** chọn 15 / 20 / 30 / 45 / 60 phút mỗi ngày. Hết giờ, app hiện màn hình nghỉ ngơi
-  (chặng đang chơi dở vẫn được làm nốt). Bấm **Cho thêm 15 phút hôm nay** nếu muốn bé học thêm.
-- **🔁 Ôn lại câu sai:** các câu bé làm sai được lưu lại; ở trang chủ có nút “Ôn lại câu sai” để bé làm lại.
-  Làm đúng thì câu đó được xóa khỏi danh sách, bé được thưởng xu.
-- **💾 Sao lưu dữ liệu:** tạo tệp `.json` (tải về máy hoặc gửi qua Zalo / Google Drive), và **khôi phục** từ tệp khi đổi máy.
-- **Cài đặt:** âm thanh, giọng đọc, tự đọc đề bài, mở khóa tất cả các chặng, cài như app, đổi tên, xóa dữ liệu.
+Vào bằng nút **Phụ huynh** ở thanh dưới cùng, trả lời một phép nhân để mở khóa. Bảng đánh giá có 5 thẻ:
+
+- **📊 Tổng quan** – xem nhanh trong 1 phút:
+  - *Tuần này:* số ngày có học, số phút, số câu, tỉ lệ đúng ngay – kèm tăng/giảm so với tuần trước; mục tiêu tuần (7 ô T2…CN).
+  - *Xếp loại theo môn:* câu cơ bản (Hoàn thành tốt / Hoàn thành / Cần cố gắng) và câu nâng cao (Xuất sắc / Khá / Đang làm quen).
+  - *Năng lực, phẩm chất* (cách ghi như ở trường – Tốt / Đạt / Cần cố gắng): Chăm chỉ, Tự học, Tư duy, Tính toán, Ngôn ngữ.
+  - *Điểm mạnh – Cần luyện:* các kỹ năng bé làm tốt nhất và yếu nhất.
+  - *So với tiến độ ở lớp:* bé đúng tiến độ, đi trước hay còn thiếu chặng nào của các tuần trước.
+  - *Gợi ý tuần này:* tối đa 3 việc nên làm (theo kịp lớp, ôn câu sai, chơi lại chặng ít sao, thử chặng 🧠…).
+- **📚 Theo môn:** xếp loại chi tiết và nhận xét, tốc độ làm bài (giây/câu, tỉ lệ câu sai trả lời vội dưới 3 giây),
+  tiến độ so với lớp, tiến độ từng chủ đề (Chắc / Đang học / Chưa học), chặng nên chơi lại, kỹ năng, câu sai gần đây.
+- **📈 Tiến bộ:** thời gian học 8 tuần (chia theo môn, ôn câu sai, thú cưng), tỉ lệ đúng ngay theo tuần (cơ bản – nâng cao),
+  số chặng mỗi tuần, lịch học 12 tuần (ô càng xanh là học càng đủ giờ), tốc độ làm bài từng môn. Số liệu tuần được giữ hơn một năm.
+- **📒 Báo cáo tuần:** xem lại từng tuần (◀ ▶), **📷 Lưu ảnh báo cáo** (ảnh PNG đẹp để cất hoặc gửi ông bà, cô giáo),
+  **📤 Gửi báo cáo** qua Zalo / Messenger (chia sẻ của Android), **📋 Chép nội dung** dạng chữ.
+- **⚙️ Cài đặt:**
+  - 🎚️ *Mức độ câu hỏi:* Chỉ cơ bản / Trộn vừa / Trộn nhiều câu nâng cao.
+  - 🎯 *Mục tiêu mỗi tuần:* số ngày học (3–7) và số phút mỗi ngày (10–45).
+  - 🏫 *Tuần học hiện tại ở lớp:* app tự ước tính theo lịch năm học 2026–2027 (khai giảng 7/9, trừ tuần nghỉ Tết);
+    lớp của bé nhanh hay chậm hơn thì bấm − 1 tuần / + 1 tuần.
+  - ⏰ *Giới hạn thời gian:* 15 / 20 / 30 / 45 / 60 phút mỗi ngày. Hết giờ, app hiện màn hình nghỉ ngơi
+    (chặng đang chơi dở vẫn được làm nốt). Bấm **Cho thêm 15 phút hôm nay** nếu muốn bé học thêm.
+  - 📝 *Câu sai đang chờ ôn:* ở trang chủ có nút “🔁 Ôn lại câu sai”; làm đúng thì câu đó được xóa khỏi danh sách, bé được thưởng xu.
+  - 💾 *Sao lưu dữ liệu:* tạo tệp `.json` (tải về máy hoặc gửi qua Zalo / Google Drive), và **khôi phục** từ tệp khi đổi máy.
+  - Âm thanh, giọng đọc, tự đọc đề bài, mở khóa tất cả các chặng, cài như app, đổi tên, xóa dữ liệu.
+
+Cách tính: chỉ tính câu bé làm **đúng ngay lần đầu** trong chặng; câu làm lại ở “Ôn lại câu sai” không làm thay đổi xếp loại.
+Thời gian học chỉ đếm khi bé đang thao tác (không đếm lúc bỏ máy, lúc bố mẹ xem Góc phụ huynh).
 
 Mẹo cho bố mẹ: bật "Mở khóa tất cả các chặng" để bé chơi ngay bài đang học trên lớp.
+Lịch "tuần nào lớp học đến bài nào" nằm trong `js/data/schedule.js` – sửa được nếu trường của bé dạy khác.
 
 ## Cấu trúc thư mục
 
@@ -123,11 +145,11 @@ manifest.webmanifest    Thông tin để cài như app (tên, biểu tượng, m
 sw.js                   Bộ nhớ đệm để chơi khi không có mạng (nhớ tăng VERSION khi sửa app)
 icons/                  Biểu tượng app
 css/style.css           Giao diện (màu sắc, bố cục, hiệu ứng)
-js/core/                Lõi: lưu dữ liệu, âm thanh, giọng đọc, chuyển màn hình, phần thưởng
-js/data/                Thú cưng, đồ ăn, phụ kiện, sticker, huy hiệu
+js/core/                Lõi: lưu dữ liệu, âm thanh, giọng đọc, chuyển màn hình, phần thưởng, tính toán bảng đánh giá (report.js)
+js/data/                Thú cưng, đồ ăn, phụ kiện, sticker, huy hiệu, lịch học theo tuần ở lớp (schedule.js)
 js/games/               Bộ máy chơi: các dạng câu hỏi và hình minh họa
 js/subjects/            Nội dung từng môn (Toán, Tiếng Việt, Tiếng Anh)
-js/screens/             Các màn hình (trang chủ, bản đồ, chơi, kết quả, thú cưng, album, phụ huynh, nghỉ ngơi)
+js/screens/             Các màn hình (trang chủ, bản đồ, chơi, kết quả, thú cưng, album, phụ huynh, ảnh báo cáo tuần, nghỉ ngơi)
 tai-lieu/               Bản đồ chương trình lớp 2 (mục lục 3 môn, từ vựng tiếng Anh, tiến độ theo tuần)
 ```
 

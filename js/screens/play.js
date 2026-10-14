@@ -46,11 +46,11 @@
       session = { finished: false, asking: false };
       session.engine = App.Engine.start(body, {
         questions, bar, pet: petMini, comboEl: combo,
-        onFinish: ({ total, firstTry, advTotal, advFirstTry }) => {
+        onFinish: ({ total, firstTry, advTotal, advFirstTry, sec }) => {
           if (!session) return;
           session.finished = true;
-          const reward = review ? App.Rewards.completeReview({ total, firstTry })
-            : App.Rewards.completeStage({ subject: sub, topic, stage, total, firstTry, advTotal, advFirstTry });
+          const reward = review ? App.Rewards.completeReview({ total, firstTry, sec })
+            : App.Rewards.completeStage({ subject: sub, topic, stage, total, firstTry, advTotal, advFirstTry, sec });
           App.Router.go('result', { ...params, total, firstTry, advTotal, advFirstTry, reward }, { replace: true });
         },
       });

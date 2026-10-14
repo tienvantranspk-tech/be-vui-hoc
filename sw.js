@@ -1,6 +1,6 @@
 /* Bộ nhớ đệm của app (PWA): cất sẵn toàn bộ app trong máy để mở nhanh và chơi được khi không có mạng.
    MỖI LẦN SỬA APP: tăng VERSION (ví dụ ...-2) để máy tính bảng tự tải bản mới ở lần mở sau. */
-const VERSION = 'bvh-2026-10-14-3';
+const VERSION = 'bvh-2026-10-14-4';
 const FONTS = 'bvh-fonts';
 
 // Các tệp của app (thêm tệp mới vào index.html thì nhớ thêm vào đây)
@@ -21,7 +21,9 @@ const SHELL = [
   'js/core/router.js',
   'js/data/pets.js',
   'js/data/stickers.js',
+  'js/data/schedule.js',
   'js/core/rewards.js',
+  'js/core/report.js',
   'js/core/ui.js',
   'js/games/visuals.js',
   'js/games/qtypes.js',
@@ -47,6 +49,7 @@ const SHELL = [
   'js/screens/pet.js',
   'js/screens/album.js',
   'js/screens/parent.js',
+  'js/screens/report-image.js',
   'js/screens/rest.js',
   'js/app.js',
 ];
