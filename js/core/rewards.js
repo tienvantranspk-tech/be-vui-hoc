@@ -81,12 +81,22 @@
   R.recordAnswer = (q, ok) => {
     const st = S();
     const sk = q.skill || 'khac';
-    const rec = st.skills[sk] || (st.skills[sk] = { n: 0, ok: 0 });
-    rec.n++;
-    if (ok) rec.ok++;
     const day = R.today();
     day.q++;
     if (ok) day.ok++;
+    // Số liệu đánh giá năng lực: không tính câu ôn lại (bé đã xem đáp án trước đó)
+    if (!q._review) {
+      const rec = st.skills[sk] || (st.skills[sk] = { n: 0, ok: 0 });
+      rec.n++;
+      if (ok) rec.ok++;
+      if (q._sid) {
+        const lv = day.lv || (day.lv = {});
+        const k = `${q._sid}.${q.lv === 'nc' ? 'nc' : 'cb'}`; // ví dụ 'toan.cb', 'tv.nc'
+        const a = lv[k] || (lv[k] = [0, 0]);
+        a[0]++;
+        if (ok) a[1]++;
+      }
+    }
     const key = R.mistakeKey(q);
     if (!ok) {
       // Ghi câu sai (mỗi câu chỉ giữ một bản, mới nhất lên đầu)
@@ -150,6 +160,44 @@
     return { stars: R.starsFor(total, firstTry), coins, gifts: [], badges: [], levelUp, petLevel: pet ? R.petLevel(pet) : 0, left: R.mistakeCount() };
   };
 
+  // ===== Đánh giá năng lực: tách câu cơ bản (theo SGK) và câu nâng cao, theo từng môn =====
+  // Môn và mức của một kỹ năng: 'nc.tv.*' Tiếng Việt nâng cao, 'nc.ta.*' Tiếng Anh nâng cao, 'nc.*' Toán nâng cao,
+  // 'tv.*' Tiếng Việt, 'ta.*' Tiếng Anh, còn lại là Toán.
+  R.skillLevel = (id) => {
+    if (id === 'khac') return null;
+    if (id.startsWith('nc.tv.')) return ['tv', 'nc'];
+    if (id.startsWith('nc.ta.')) return ['ta', 'nc'];
+    if (id.startsWith('nc.')) return ['toan', 'nc'];
+    if (id.startsWith('tv.')) return ['tv', 'cb'];
+    if (id.startsWith('ta.')) return ['ta', 'cb'];
+    return ['toan', 'cb'];
+  };
+  // { toan: { cb: { n, ok, n7, ok7, skills:[{ id, n, ok }] }, nc: {…} }, tv: …, ta: … }
+  R.ability = () => {
+    const st = S();
+    const out = {};
+    for (const sid of ['toan', 'tv', 'ta']) out[sid] = { cb: { n: 0, ok: 0, n7: 0, ok7: 0, skills: [] }, nc: { n: 0, ok: 0, n7: 0, ok7: 0, skills: [] } };
+    for (const [id, v] of Object.entries(st.skills)) {
+      const m = R.skillLevel(id);
+      if (!m || !out[m[0]]) continue;
+      const o = out[m[0]][m[1]];
+      o.n += v.n;
+      o.ok += v.ok;
+      o.skills.push({ id, n: v.n, ok: v.ok });
+    }
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const day = st.days[U.dayKey(d)];
+      if (!day || !day.lv) continue;
+      for (const [k, [n, ok]] of Object.entries(day.lv)) {
+        const [sid, lv] = k.split('.');
+        if (out[sid] && out[sid][lv]) { out[sid][lv].n7 += n; out[sid][lv].ok7 += ok; }
+      }
+    }
+    return out;
+  };
+
   // ===== Giới hạn thời gian học mỗi ngày =====
   R.limitSec = () => {
     const lim = S().settings.dailyLimit || 0;
@@ -175,11 +223,14 @@
   };
 
   // ===== Hoàn thành một chặng → tính phần thưởng =====
-  R.completeStage = function ({ subject, topic, stage, total, firstTry }) {
+  R.completeStage = function ({ subject, topic, stage, total, firstTry, advTotal = 0, advFirstTry = 0 }) {
     const st = S();
     const key = R.key(subject.id, topic.id, stage.id);
     const prev = st.progress[key];
-    const stars = R.starsFor(total, firstTry);
+    // Số sao = mức nắm bài theo SGK: tính trên các câu cơ bản (câu nâng cao chỉ thêm xu, không làm mất sao).
+    // Chặng thử thách toàn câu nâng cao thì tính trên tất cả.
+    const baseTotal = total - advTotal, baseFirst = firstTry - advFirstTry;
+    const stars = baseTotal >= 3 ? R.starsFor(baseTotal, baseFirst) : R.starsFor(total, firstTry);
     const prevStars = prev ? prev.stars : 0;
     const firstClear = !prev;
     st.progress[key] = {
@@ -191,11 +242,12 @@
     };
 
     // Xu: 1 xu mỗi câu đúng ngay + 2 xu mỗi sao + 5 xu khi qua chặng lần đầu + 10 xu cho chặng đầu tiên trong ngày.
-    // Chặng thử thách: xu thưởng gấp đôi.
+    // Câu nâng cao làm đúng ngay được thêm 1 xu. Chặng thử thách: xu thưởng gấp đôi.
     const day = R.today();
     const dailyBonus = day.stages === 0 ? 10 : 0;
     day.stages++;
-    let coins = (firstTry + stars * 2 + (firstClear ? 5 : 0)) * (stage.bonus ? 2 : 1) + dailyBonus;
+    const advBonus = stage.bonus ? 0 : advFirstTry;
+    let coins = (firstTry + stars * 2 + (firstClear ? 5 : 0) + advBonus) * (stage.bonus ? 2 : 1) + dailyBonus;
 
     R.touchStreak();
 
@@ -221,7 +273,7 @@
     st.coins += coins;
     const badges = R.checkBadges(subject, topic);
     App.Store.save();
-    return { stars, prevStars, coins, dailyBonus, firstClear, gifts, badges, levelUp, petLevel: pet ? R.petLevel(pet) : 0 };
+    return { stars, prevStars, coins, dailyBonus, advBonus, firstClear, gifts, badges, levelUp, petLevel: pet ? R.petLevel(pet) : 0 };
   };
 
   // ===== Thú cưng =====

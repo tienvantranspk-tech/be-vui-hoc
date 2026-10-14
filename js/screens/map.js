@@ -128,14 +128,15 @@
     }
     App.Sound.play('pop');
     const count = stage.plan.reduce((s, [, n]) => s + n, 0);
-    const advanced = App.Store.state.settings.level === 'nang-cao' && stage.adv && !stage.bonus;
+    const lv = App.Store.state.settings.level;
+    const advanced = (lv === 'tron' || lv === 'nang-cao') && stage.adv && !stage.bonus;
     const body = h('div.stage-sheet',
       h('div.s-ico', stage.icon),
       h('div.s-short', `${topic.short} · ${stage.short}`),
       h('div.modal-title', stage.name),
       h('div.s-stars', stars ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : '☆☆☆'),
       stage.bonus ? h('div.s-note', '🧠 Câu hỏi khó, cần suy nghĩ kĩ · Không bắt buộc · Xu thưởng gấp đôi') : null,
-      advanced ? h('div.s-note', '🔥 Mức nâng cao: có thêm câu khó hơn sách giáo khoa') : null,
+      advanced ? h('div.s-note', `🔥 Có xen khoảng ${lv === 'nang-cao' ? '5' : '3'}/10 câu nâng cao (khó hơn sách giáo khoa)`) : null,
       h('div.modal-body', `${count} câu hỏi · khoảng ${Math.max(3, Math.round(count * 0.6))} phút`));
     App.UI.modal({
       body,

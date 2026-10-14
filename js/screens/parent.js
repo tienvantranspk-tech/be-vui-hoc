@@ -63,6 +63,9 @@
         h('div.p-stat', h('b', today.q ? pct(today.ok, today.q) + '%' : '–'), h('span', 'đúng ngay lần đầu'))),
       h('p.muted', { style: { marginTop: '.7rem' } }, `🔥 Chuỗi ngày học: ${R.streakNow()} ngày (dài nhất: ${st.streak.best} ngày)`)));
 
+    // Đánh giá năng lực: câu cơ bản và câu nâng cao tách riêng
+    wrap.appendChild(abilityCard());
+
     // 7 ngày qua
     const days = [];
     for (let i = 6; i >= 0; i--) {
@@ -88,18 +91,22 @@
           h('div.p-bar', h('i', { style: { width: (s.total ? (s.done / s.total) * 100 : 0) + '%', background: `var(--${sid})` } })));
       })));
 
-    // Kỹ năng cần luyện thêm
+    // Kỹ năng cần luyện thêm – tách kỹ năng cơ bản và kỹ năng nâng cao
     const skills = Object.entries(st.skills)
-      .filter(([, v]) => v.n >= 3)
-      .map(([id, v]) => ({ id, n: v.n, p: pct(v.ok, v.n) }))
-      .sort((x, y) => x.p - y.p)
-      .slice(0, 6);
+      .filter(([id, v]) => v.n >= 3 && R.skillLevel(id))
+      .map(([id, v]) => ({ id, n: v.n, p: pct(v.ok, v.n), lv: R.skillLevel(id)[1] }))
+      .sort((x, y) => x.p - y.p);
+    const skillRows = (lv) => {
+      const list = skills.filter((s) => s.lv === lv).slice(0, 5);
+      return list.length ? list.map((s) => h('div.p-row',
+        h('div.lbl', `${subjectIcon(R.skillLevel(s.id)[0])} ${shortSkill(s.id)}`, h('small', `${s.n} câu · đúng ngay ${s.p}%`)),
+        h('div.p-bar', h('i', { style: { width: s.p + '%', background: barColor(s.p, lv) } }))))
+        : h('p.muted', lv === 'cb' ? 'Chưa đủ dữ liệu. Bé làm thêm vài chặng nhé!' : 'Chưa có đủ câu nâng cao để đánh giá.');
+    };
     wrap.appendChild(h('div.p-card',
-      h('h3', '🎯 Kỹ năng (sắp xếp từ cần luyện nhất)'),
-      skills.length ? skills.map((s) => h('div.p-row',
-        h('div.lbl', (App.SkillNames && App.SkillNames[s.id]) || s.id, h('small', `${s.n} câu · đúng ngay ${s.p}%`)),
-        h('div.p-bar', h('i', { style: { width: s.p + '%', background: s.p >= 80 ? 'var(--good)' : s.p >= 60 ? 'var(--gold)' : 'var(--bad)' } }))))
-        : h('p.muted', 'Chưa đủ dữ liệu. Bé làm thêm vài chặng nhé!')));
+      h('h3', '🎯 Kỹ năng cần luyện thêm'),
+      h('h4', '📗 Cơ bản (theo sách giáo khoa)'), skillRows('cb'),
+      h('h4', '🔥 Nâng cao'), skillRows('nc')));
 
     // Mức độ câu hỏi
     wrap.appendChild(levelCard());
@@ -176,23 +183,80 @@
       : 'Cần mở app từ địa chỉ https trên mạng (xem hướng dẫn trong README) thì mới cài được.')));
   }
 
+  // ---- Đánh giá năng lực ----
+  const pctOf = (o, k = '') => (o['n' + k] ? Math.round((o['ok' + k] / o['n' + k]) * 100) : 0);
+  const subjectIcon = (sid) => (App.Curriculum[sid] ? App.Curriculum[sid].icon : '');
+  // Tên kỹ năng ngắn gọn (bỏ phần "Toán nâng cao: ", "Tiếng Anh: "…)
+  const shortSkill = (id) => ((App.SkillNames && App.SkillNames[id]) || id).replace(/^(Toán nâng cao|Tiếng Việt nâng cao|Tiếng Anh nâng cao|Tiếng Anh): /, '');
+  // Câu cơ bản: thang giống cách nhận xét ở trường (Hoàn thành tốt / Hoàn thành / Cần cố gắng).
+  // Câu nâng cao khó hơn nên mốc thấp hơn.
+  const RATE = {
+    cb: { min: 10, cuts: [[85, 'Hoàn thành tốt', 'good', '🌟'], [65, 'Hoàn thành', 'ok', '✅'], [0, 'Cần cố gắng', 'low', '💪']] },
+    nc: { min: 6, cuts: [[70, 'Xuất sắc', 'good', '🏆'], [45, 'Khá', 'ok', '👍'], [0, 'Đang làm quen', 'low', '🌱']] },
+  };
+  const rateOf = (o, lv) => (o.n < RATE[lv].min ? null : RATE[lv].cuts.find(([c]) => pctOf(o) >= c));
+  const barColor = (p, lv) => (p >= RATE[lv].cuts[0][0] ? 'var(--good)' : p >= RATE[lv].cuts[1][0] ? 'var(--gold)' : 'var(--bad)');
+  // Kỹ năng yếu nhất (ít nhất 3 câu, dưới 80% đúng)
+  const weakest = (o, k = 2) => o.skills.filter((s) => s.n >= 3 && s.ok / s.n < 0.8).sort((a, b) => a.ok / a.n - b.ok / b.n).slice(0, k).map((s) => shortSkill(s.id).toLowerCase());
+
+  function comment(cb, nc) {
+    if (cb.n < RATE.cb.min) return 'Chưa đủ dữ liệu để nhận xét. Cho bé làm thêm vài chặng nhé.';
+    const parts = [], pc = pctOf(cb), pn = pctOf(nc), wc = weakest(cb), wn = weakest(nc);
+    if (pc >= 85) parts.push('Bé nắm chắc kiến thức cơ bản.');
+    else if (pc >= 65) parts.push('Bé nắm được kiến thức cơ bản, đôi chỗ còn nhầm.' + (wc.length ? ` Nên luyện thêm: ${wc.join(', ')}.` : ''));
+    else parts.push('Bé cần ôn lại kiến thức cơ bản.' + (wc.length ? ` Yếu nhất: ${wc.join(', ')}.` : '') + ' Có thể tạm chọn “Chỉ cơ bản” và dùng nút 🔁 Ôn lại câu sai.');
+    if (nc.n < RATE.nc.min) parts.push('Chưa đủ câu nâng cao để nhận xét.');
+    else if (pn >= 70) parts.push('Câu nâng cao bé làm rất tốt – có thể chọn “Trộn nhiều” và cho bé làm chặng 🧠 Thử thách.');
+    else if (pn >= 45) parts.push('Câu nâng cao bé làm khá.' + (wn.length ? ` Dạng còn khó: ${wn.join(', ')}.` : ''));
+    else parts.push('Câu nâng cao còn mới với bé' + (wn.length ? ` (khó nhất: ${wn.join(', ')})` : '') + '. Bố mẹ cùng bé đọc lời giải sau mỗi câu sai nhé.');
+    return parts.join(' ');
+  }
+
+  function abilityCard() {
+    const A = R.ability();
+    const row = (label, o, lv) => {
+      const r = rateOf(o, lv), p = pctOf(o);
+      const sub = o.n ? `${p}% đúng ngay · ${o.n} câu` + (o.n7 ? ` · 7 ngày qua: ${pctOf(o, '7')}%` : '') : 'Chưa có câu nào';
+      return h('div.ab-row',
+        h('div.ab-lbl', label, h('small', sub)),
+        h('div.p-bar', h('i', { style: { width: p + '%', background: barColor(p, lv) } })),
+        r ? h('span.ab-rate', { class: r[2] }, `${r[3]} ${r[1]}`) : h('span.ab-rate.none', o.n ? `cần thêm ${RATE[lv].min - o.n} câu` : '—'));
+    };
+    return h('div.p-card.wide',
+      h('h3', '📊 Đánh giá năng lực'),
+      h('p.muted', 'Câu cơ bản (theo sách giáo khoa) và câu nâng cao được trộn lẫn khi bé chơi, nhưng được chấm riêng ở đây. Tính theo số câu làm đúng ngay lần đầu; không tính các câu ôn lại.'),
+      ['toan', 'tv', 'ta'].map((sid) => {
+        const sub = App.Curriculum[sid], a = A[sid];
+        return h('div.ab-sub',
+          h('div.ab-title', `${sub.icon} ${sub.name}`),
+          row('📗 Cơ bản', a.cb, 'cb'),
+          row('🔥 Nâng cao', a.nc, 'nc'),
+          h('p.ab-note', comment(a.cb, a.nc)));
+      }),
+      h('p.muted.ab-legend', 'Cơ bản: từ 85% Hoàn thành tốt · 65–84% Hoàn thành · dưới 65% Cần cố gắng. Nâng cao: từ 70% Xuất sắc · 45–69% Khá · dưới 45% Đang làm quen.'));
+  }
+
   // ---- Mức độ câu hỏi: Cơ bản (theo SGK) / Nâng cao ----
   function levelCard() {
     const st = App.Store.state;
     const card = h('div.p-card');
     const draw = () => {
-      const lv = st.settings.level || 'co-ban';
+      const lv = st.settings.level || 'tron';
       const ch = R.challengeSummary();
+      const NOTE = {
+        'co-ban': 'Chỉ cơ bản: câu hỏi đúng mức sách giáo khoa, không xen câu nâng cao.',
+        tron: 'Trộn vừa (nên dùng): mỗi chặng xen khoảng 3/10 câu nâng cao vào giữa các câu cơ bản, có nhãn 🔥.',
+        'nang-cao': 'Trộn nhiều: mỗi chặng xen khoảng 5/10 câu nâng cao. Hợp khi bé đã làm tốt cả câu cơ bản lẫn câu nâng cao.',
+      };
       card.innerHTML = '';
       App.U.add(card, [
         h('h3', '🎚️ Mức độ câu hỏi'),
-        h('div.chips', [['co-ban', '📗 Cơ bản (theo SGK)'], ['nang-cao', '🔥 Nâng cao']].map(([id, label]) => h('button.chip', {
+        h('div.chips', [['co-ban', '📗 Chỉ cơ bản'], ['tron', '🔀 Trộn vừa'], ['nang-cao', '🔥 Trộn nhiều']].map(([id, label]) => h('button.chip', {
           class: id === lv ? 'on' : '',
           onclick: () => { App.Sound.play('tap'); st.settings.level = id; App.Store.save(); draw(); },
         }, label))),
-        h('p.muted', { style: { marginTop: '.6rem' } }, lv === 'nang-cao'
-          ? 'Nâng cao: mỗi chặng có khoảng 4/10 câu khó hơn sách giáo khoa – tìm số chưa biết, bài toán hai bước, điền dấu, so sánh biểu thức, câu đố logic; Tiếng Việt có từ trái nghĩa, tục ngữ, tìm từ viết sai…; Tiếng Anh có chọn từ viết đúng, ngữ pháp, nghe câu không có hình. Câu nâng cao có nhãn 🔥.'
-          : 'Cơ bản: câu hỏi đúng mức sách giáo khoa. Chọn “Nâng cao” nếu bé đã làm tốt và muốn thử sức hơn.'),
+        h('p.muted', { style: { marginTop: '.6rem' } }, NOTE[lv] || NOTE.tron),
+        h('p.muted', { style: { marginTop: '.4rem' } }, 'Câu nâng cao: Toán có tìm số chưa biết, bài toán hai bước, điền dấu, đếm hình…; Tiếng Việt có từ trái nghĩa, tục ngữ, tìm từ viết sai…; Tiếng Anh có chính tả, ngữ pháp, nghe câu không có hình. Số sao chỉ tính theo câu cơ bản; câu nâng cao làm đúng được thêm xu.'),
         h('p.muted', { style: { marginTop: '.4rem' } },
           `🧠 Cuối mỗi chủ đề có chặng “Thử thách tư duy” (không bắt buộc, xu thưởng gấp đôi). Bé đã vượt ${ch.done}/${ch.total} chặng thử thách.`)]);
     };

@@ -912,6 +912,23 @@ b { font-weight: 700; }
 .p-card .chip { border: 2px solid transparent; }
 .p-card .chip.on { background: var(--toan); color: #fff; border-color: var(--toan-dark); }
 .p-actions { display: flex; gap: .7rem; flex-wrap: wrap; margin-top: .7rem; }
+.p-card.wide { grid-column: 1 / -1; }   /* thẻ rộng hết hàng */
+.p-card h4 { font-family: var(--font-fun); font-weight: 800; font-size: 1.05rem; margin: .7rem 0 .1rem; color: var(--ink-soft); }
+/* Đánh giá năng lực */
+.ab-sub { padding: .6rem 0 .8rem; border-bottom: 1px solid var(--line); }
+.ab-sub:last-of-type { border-bottom: 0; }
+.ab-title { font-family: var(--font-fun); font-weight: 800; font-size: 1.2rem; margin-bottom: .1rem; }
+.ab-row { display: flex; align-items: center; gap: .8rem; padding: .3rem 0; }
+.ab-lbl { flex: 1; min-width: 0; font-weight: 700; }
+.ab-lbl small { display: block; font-weight: 400; color: var(--ink-soft); font-size: .88rem; }
+.ab-rate { flex: none; min-width: 9.5rem; text-align: center; font-weight: 800; font-size: .92rem; padding: .2rem .7rem; border-radius: 99px; white-space: nowrap; }
+.ab-rate.good { background: var(--good-soft); color: var(--good-dark); }
+.ab-rate.ok { background: #fff6db; color: #8a6200; }
+.ab-rate.low { background: var(--bad-soft); color: var(--bad-dark); }
+.ab-rate.none { background: #f1f3f9; color: var(--ink-soft); font-weight: 700; }
+.ab-note { font-size: .98rem; line-height: 1.5; background: #f6f8fd; border-radius: 12px; padding: .5rem .8rem; margin-top: .35rem; }
+.ab-legend { font-size: .85rem; margin-top: .6rem; }
+@media (max-width: 640px) { .ab-row { flex-wrap: wrap; } .ab-rate { min-width: 0; } }
 .gate-q { font-family: var(--font-fun); font-weight: 800; font-size: 2.6rem; margin: .4rem 0 .8rem; }
 .gate-q .slot { min-width: 2.2em; }
 .gate .keypad { margin: 0 auto; grid-template-columns: repeat(6, 1fr); }

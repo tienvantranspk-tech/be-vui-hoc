@@ -151,6 +151,12 @@
 
   App.Gen.taAdv = X;
 
+  // Hỏi – đáp của nhiều Unit (dùng lại dạng câu cơ bản, nhưng chấm là kỹ năng nâng cao)
+  X.answerMany = (n) => {
+    const g = E.answerPick(...U.range(2, n));
+    return () => Object.assign(g(), { skill: 'nc.ta.hoidap' });
+  };
+
   // ================= Gắn vào các Unit =================
   const pools = {};
   for (let n = 1; n <= 16; n++) {
@@ -162,7 +168,7 @@
     p.push([X.grammar(n), `u${n}b`]);
     if (n >= 3) p.push([X.readPick(n), `u${n}b`]); // cần ít nhất 4 đồ vật đã học
     if (tpls.length) p.push([X.listenText(...tpls), `u${n}b`]);
-    if (n >= 5) p.push([E.answerPick(...U.range(2, n)), `u${n}b`]);
+    if (n >= 5) p.push([X.answerMany(n), `u${n}b`]);
     if (n >= 13) p.push([X.mathWords(n), `u${n}b`]);
   }
   App.attachAdvanced(App.Curriculum.ta, pools);
@@ -171,5 +177,6 @@
     'nc.ta.khacloai': 'Tiếng Anh nâng cao: Tìm từ khác loại', 'nc.ta.chinhta': 'Tiếng Anh nâng cao: Viết đúng chính tả',
     'nc.ta.nguphap': 'Tiếng Anh nâng cao: Ngữ pháp', 'nc.ta.nghecau': 'Tiếng Anh nâng cao: Nghe câu (không có hình)',
     'nc.ta.doc': 'Tiếng Anh nâng cao: Đọc câu, chọn hình', 'nc.ta.tinh': 'Tiếng Anh nâng cao: Làm tính bằng tiếng Anh',
+    'nc.ta.hoidap': 'Tiếng Anh nâng cao: Hỏi – đáp nhiều Unit',
   });
 })(window.App);

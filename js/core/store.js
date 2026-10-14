@@ -3,9 +3,10 @@
   'use strict';
   const KEY = 'bevuihoc.lop2';   // chỗ lưu trong trình duyệt
 
+  const VERSION = 2;
   function defaults() {
     return {
-      version: 1,
+      version: VERSION,
       createdAt: Date.now(),
       profile: null,      // { name }
       pet: null,          // { kind, name, xp, full, happy, updatedAt, wear: {head, face, neck}, owned: [] }
@@ -15,12 +16,21 @@
       badges: {},         // id huy hiệu → thời điểm nhận
       skills: {},         // id kỹ năng → { n: số câu, ok: số câu đúng ngay lần đầu }
       mistakes: [],       // các câu bé làm sai gần đây (để ôn lại): { t, skill, sid, q }
-      days: {},           // '2026-10-13' → { sec, q, ok, stages, extra (phút bố mẹ cho thêm) }
+      // '2026-10-13' → { sec, q, ok, stages, extra (phút bố mẹ cho thêm), lv: { 'toan.cb': [số câu, đúng ngay], 'toan.nc': … } }
+      days: {},
       streak: { cur: 0, best: 0, last: null },
       // dailyLimit: số phút được học mỗi ngày (0 = không giới hạn)
-      // level: 'co-ban' (đúng mức sách giáo khoa) | 'nang-cao' (thêm câu khó hơn vào mỗi chặng)
-      settings: { sound: true, voice: true, autoRead: false, unlockAll: false, dailyLimit: 0, level: 'co-ban' },
+      // level: 'co-ban' (chỉ câu theo sách giáo khoa) | 'tron' (xen khoảng 3/10 câu nâng cao) | 'nang-cao' (xen khoảng 5/10)
+      settings: { sound: true, voice: true, autoRead: false, unlockAll: false, dailyLimit: 0, level: 'tron' },
     };
+  }
+  // Nâng cấp dữ liệu cũ: bản 1 mặc định "chỉ cơ bản" → bản 2 mặc định trộn câu cơ bản với câu nâng cao
+  function migrate(st) {
+    if ((st.version || 1) < 2) {
+      if (st.settings.level === 'co-ban') st.settings.level = 'tron';
+      st.version = 2;
+    }
+    return st;
   }
   const APP_ID = 'bevuihoc.lop2';
 
@@ -39,7 +49,7 @@
     load() {
       let saved = null;
       try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { saved = null; }
-      this.state = saved ? merge(defaults(), saved) : defaults();
+      this.state = saved ? migrate(merge(defaults(), saved)) : defaults();
       this.prune();
       return this.state;
     },
@@ -64,7 +74,7 @@
       return { state: st, exportedAt: obj.exportedAt || null };
     },
     replace(saved) {
-      this.state = merge(defaults(), saved);
+      this.state = migrate(merge(defaults(), saved));
       this.prune();
       this.save();
     },

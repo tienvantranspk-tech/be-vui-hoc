@@ -11,8 +11,10 @@
       const sub = review ? null : App.Curriculum[p.subject];
       const st = App.Store.state;
       const titles = { 3: 'Xuất sắc! 🏆', 2: 'Giỏi lắm! 🎉', 1: 'Hoàn thành! 👍' };
+      const advMissed = p.advTotal && p.advTotal < p.total && p.advFirstTry < p.advTotal;
       const subs = {
-        3: p.firstTry === p.total ? `${st.profile.name} làm đúng hết luôn! 💯` : `${st.profile.name} làm đúng gần hết luôn!`,
+        3: p.firstTry === p.total ? `${st.profile.name} làm đúng hết luôn! 💯`
+          : advMissed ? `${st.profile.name} nắm chắc bài rồi! Câu nâng cao khó hơn, lần sau cố thêm nhé! 💪` : `${st.profile.name} làm đúng gần hết luôn!`,
         2: 'Bé làm tốt lắm, chơi lại để lấy đủ 3 sao nhé!',
         1: 'Bé đã cố gắng! Chơi lại để giỏi hơn nữa nào!',
       };
@@ -28,6 +30,8 @@
         h('div.result-sub', subText),
         h('div.result-row',
           h('span.pill', `✅ Đúng ngay: ${p.firstTry}/${p.total}`),
+          // chặng có xen câu nâng cao: cho bé thấy riêng số câu nâng cao làm đúng (mỗi câu được thêm 1 xu)
+          p.advTotal && p.advTotal < p.total ? h('span.pill.lv', `🔥 Câu nâng cao: ${p.advFirstTry}/${p.advTotal}`) : null,
           h('span.pill.js-gain', '🪙 +', h('b', '0'))),
         reward.dailyBonus ? h('div.muted', `(có +${reward.dailyBonus} xu thưởng chăm chỉ cho chặng đầu tiên hôm nay 🌞)`) : null,
         h('div', { style: { display: 'flex', alignItems: 'center', gap: '.8rem' } },

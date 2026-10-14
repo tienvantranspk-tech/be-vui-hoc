@@ -8,7 +8,9 @@
   const TRY_AGAIN = ['Chưa đúng rồi, bé thử lại nhé!', 'Gần đúng rồi, thử lần nữa nào!', 'Bình tĩnh nghĩ lại nhé!'];
 
   // Tạo bộ câu hỏi cho một chặng từ kế hoạch: plan = [[hàm tạo câu, số câu], …]
-  // Mức "Nâng cao": thay khoảng 4/10 câu bằng câu nâng cao của chủ đề (stage.adv), đặt ở cuối chặng.
+  // Trộn câu nâng cao (stage.adv) với câu cơ bản theo mức bố mẹ chọn: "tron" ≈ 3/10, "nang-cao" ≈ 5/10.
+  // Câu nâng cao được đánh dấu lv = 'nc' để Góc phụ huynh đánh giá riêng.
+  const ADV_RATIO = { tron: 0.3, 'nang-cao': 0.5 };
   App.makeQuestions = function (stage) {
     if (stage.make) return stage.make();
     let out = [];
@@ -24,23 +26,24 @@
     };
     for (const [gen, n] of stage.plan) for (let k = 0; k < n; k++) out.push(make(gen));
     if (stage.shuffle) out = App.U.shuffle(out);
-    if (stage.bonus) out.forEach((q) => { q.tag = '🧠 Thử thách'; });
+    if (stage.bonus) out.forEach((q) => { q.tag = '🧠 Thử thách'; q.lv = 'nc'; });
     const st = App.Store.state;
-    const adv = !stage.bonus && st && st.settings.level === 'nang-cao' && stage.adv;
+    const ratio = (st && ADV_RATIO[st.settings.level]) || 0;
+    const adv = !stage.bonus && ratio && stage.adv;
     if (adv && (adv.cur.length || adv.prev.length)) {
-      const k = Math.max(2, Math.round(out.length * 0.4));
+      const k = Math.max(2, Math.round(out.length * ratio));
       const drop = new Set(App.U.sample(out.map((_, i) => i), k));
       // ưu tiên dạng nâng cao của chủ đề đang học, không lặp một dạng khi còn dạng khác
       const cur = App.U.shuffle(adv.cur), prev = App.U.shuffle(adv.prev);
-      const extra = [];
+      out = out.filter((_, i) => !drop.has(i));
       for (let j = 0; j < k; j++) {
         const fromCur = cur.length && (!prev.length || Math.random() < 0.75);
         const list = fromCur ? cur : prev;
         const q = make(list[j % list.length]);
         q.tag = '🔥 Nâng cao';
-        extra.push(q);
+        q.lv = 'nc';
+        out.splice(App.U.rand(1, out.length), 0, q); // xen vào giữa các câu cơ bản (câu đầu tiên luôn là câu cơ bản)
       }
-      out = out.filter((_, i) => !drop.has(i)).concat(extra);
     }
     return out;
   };
@@ -100,7 +103,7 @@
     // root: vùng chơi; opts: { questions, bar, pet, comboEl, onFinish({ total, firstTry }) }
     start(root, opts) {
       const qs = opts.questions;
-      let i = 0, attempts = 0, firstTry = 0, combo = 0;
+      let i = 0, attempts = 0, firstTry = 0, combo = 0, advFirstTry = 0; // advFirstTry: câu nâng cao làm đúng ngay
       let ctrl = null, slot = null, timer = null, busy = false, finished = false, rightCol = null, placeholder = '?';
       const area = h('div.q-area');
       const fb = h('div.feedback');
@@ -202,7 +205,7 @@
       function success(firstTryOk) {
         busy = true;
         const q = qs[i];
-        if (firstTryOk) { firstTry++; combo++; } else combo = 0;
+        if (firstTryOk) { firstTry++; combo++; if (q.lv === 'nc') advFirstTry++; } else combo = 0;
         updateCombo();
         App.Rewards.recordAnswer(q, firstTryOk);
         fillSlot(q);
@@ -263,7 +266,8 @@
           finished = true;
           opts.bar.style.width = '100%';
           if (ctrl && ctrl.destroy) ctrl.destroy();
-          setTimeout(() => opts.onFinish({ total: qs.length, firstTry }), 350);
+          const advTotal = qs.filter((x) => x.lv === 'nc').length;
+          setTimeout(() => opts.onFinish({ total: qs.length, firstTry, advTotal, advFirstTry }), 350);
         } else {
           setTimeout(show, 120);
         }
