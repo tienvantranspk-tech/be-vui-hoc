@@ -1,0 +1,19 @@
+{
+  "name": "Bé Vui Học – Lớp 2",
+  "short_name": "Bé Vui Học",
+  "description": "Vừa học vừa chơi Toán, Tiếng Việt, Tiếng Anh lớp 2 (bộ sách Kết nối tri thức).",
+  "lang": "vi",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#d6efff",
+  "theme_color": "#3d8bff",
+  "categories": ["education", "kids", "games"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

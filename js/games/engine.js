@@ -1,0 +1,250 @@
+/* Bộ máy chạy một lượt chơi: hiện câu hỏi → chấm → khen hoặc gợi ý → sang câu tiếp */
+(function (App) {
+  'use strict';
+  const { h, pick } = App.U;
+
+  const PRAISE = ['Đúng rồi!', 'Giỏi quá!', 'Tuyệt vời!', 'Chính xác!', 'Hoan hô!', 'Xuất sắc!', 'Siêu quá!'];
+  const PRAISE_ICON = ['🎉', '🌟', '👏', '🥳', '💯', '✨'];
+  const TRY_AGAIN = ['Chưa đúng rồi, bé thử lại nhé!', 'Gần đúng rồi, thử lần nữa nào!', 'Bình tĩnh nghĩ lại nhé!'];
+
+  // Tạo bộ câu hỏi cho một chặng từ kế hoạch: plan = [[hàm tạo câu, số câu], …]
+  App.makeQuestions = function (stage) {
+    if (stage.make) return stage.make();
+    const out = [];
+    const seen = new Set();
+    // Dấu hiệu nhận ra câu trùng (dạng sắp xếp: so theo đáp án, vì các ô đã bị xáo trộn)
+    const sig = (q) => [q.type, q.prompt, q.big, JSON.stringify(q.answer == null ? '' : q.answer),
+      JSON.stringify(q.type === 'order' ? '' : q.items || q.pairs || q.visual || '')].join('|');
+    for (const [gen, n] of stage.plan) {
+      for (let k = 0; k < n; k++) {
+        let q, tries = 0;
+        do { q = gen(); tries++; } while (seen.has(sig(q)) && tries < 30);
+        seen.add(sig(q));
+        out.push(q);
+      }
+    }
+    return stage.shuffle ? App.U.shuffle(out) : out;
+  };
+
+  // Đáp án điền vào ô "?" và đáp án để báo cho bé (có thể kèm đơn vị, hoặc tên hình "Hình 2")
+  const slotText = (q) => String(q.slotAnswer != null ? q.slotAnswer : q.answer);
+  const answerText = (q) => {
+    if (q.answerLabel) return q.answerLabel;
+    if (q.type === 'order') return q.answer.join(', ');
+    if (q.type === 'match') return '';
+    return slotText(q) + (q.unit ? ' ' + q.unit : '');
+  };
+  const speakText = (q) => q.speak ||
+    [q.prompt, q.big && q.big.trim() !== '?' ? App.U.mathSpeak(q.big) : ''].filter(Boolean).join('. ');
+  // Lời đọc là một chuỗi (một thứ tiếng) hoặc danh sách [[câu, 'vi' | 'en'], …] đọc nối tiếp (bài Tiếng Anh)
+  const talk = (x, lang) => (Array.isArray(x) ? App.Speech.say(x) : App.Speech.speak(x, lang));
+  // Đọc lời giải: đổi kí hiệu sang lời ("5 kg" → "5 ki-lô-gam", "(l)" → "(lít)")
+  const speakPlain = (t) => t
+    .replace(/−/g, ' trừ ')
+    .replace(/(\d|\()\s*kg(?!\p{L})/gu, '$1 ki-lô-gam')
+    .replace(/(\d|\()\s*km(?!\p{L})/gu, '$1 ki-lô-mét')
+    .replace(/(\d|\()\s*dm(?!\p{L})/gu, '$1 đề-xi-mét')
+    .replace(/(\d|\()\s*cm(?!\p{L})/gu, '$1 xăng-ti-mét')
+    .replace(/(\d|\()\s*m(?!\p{L})/gu, '$1 mét')
+    .replace(/(\d|\()\s*l(?!\p{L})/gu, '$1 lít');
+  // Những loại hình nên đặt bên trái, phần trả lời bên phải khi máy xoay ngang
+  const SPLIT = new Set(['balance', 'balances', 'bottles', 'cups', 'jars', 'clock', 'digital', 'calendar',
+    'geo', 'ruler', 'shapes', 'grid', 'vertical', 'blocks', 'tenframe', 'scatter', 'bag', 'picto', 'money', 'listen', 'pic']);
+
+  App.Engine = {
+    // root: vùng chơi; opts: { questions, bar, pet, comboEl, onFinish({ total, firstTry }) }
+    start(root, opts) {
+      const qs = opts.questions;
+      let i = 0, attempts = 0, firstTry = 0, combo = 0;
+      let ctrl = null, slot = null, timer = null, busy = false, finished = false, rightCol = null, placeholder = '?';
+      const area = h('div.q-area');
+      const fb = h('div.feedback');
+      root.append(area, fb);
+
+      function show() {
+        const q = qs[i];
+        attempts = 0;
+        busy = false;
+        if (ctrl && ctrl.destroy) ctrl.destroy();
+        area.innerHTML = '';
+        area.scrollTop = 0;
+        opts.bar.style.width = (i / qs.length) * 100 + '%';
+        const lang = q.lang || 'vi';
+        area.appendChild(h('div.q-head',
+          h('button.icon-btn', { 'aria-label': 'Đọc đề', onclick: () => talk(speakText(q), lang) }, '🔊'),
+          h('div.q-prompt', q.prompt)));
+        const left = h('div.q-left');
+        rightCol = h('div.q-right');
+        if (q.passage) {
+          // Bài đọc ngắn (đọc hiểu)
+          const read = () => App.Speech.speak(`${q.passage.title}. ${q.passage.text}`, 'vi');
+          left.appendChild(h('div.passage',
+            h('div.p-head', h('button.icon-btn', { 'aria-label': 'Đọc bài', onclick: read }, '🔊'), h('div.p-title', q.passage.title)),
+            h('div.p-text', q.passage.text)));
+        }
+        if (q.visual) left.appendChild(h('div.q-visual', App.Visuals.render(q.visual)));
+        slot = null;
+        placeholder = q.slotPlaceholder || '?'; // câu hỏi về dấu câu: ô trống để trắng (vì "?" cũng là một đáp án)
+        if (q.big) {
+          const bigEl = renderBig(q.big, q.bigText, q.bigRaw);
+          if (q.bigClass) bigEl.classList.add(...q.bigClass.split(' '));
+          rightCol.appendChild(bigEl);
+        }
+        const answers = h('div.answers');
+        rightCol.appendChild(answers);
+        const split = q.passage || (q.visual && SPLIT.has(q.visual.kind));
+        area.appendChild(h('div.q-body', { class: split ? 'split' : '' }, left, rightCol));
+        ctrl = App.QTypes[q.type].render(q, answers, { submit, done, slot, card: area });
+        // Tự đọc: cả đề (khi bật "Tự đọc đề bài"), hoặc chỉ phần cần nghe của bài nghe tiếng Anh
+        const auto = App.Store.state.settings.autoRead || q.autoSpeak ? speakText(q) : q.autoSay;
+        if (auto) setTimeout(() => { if (qs[i] === q && !finished) talk(auto, lang); }, 350);
+      }
+
+      // Biểu thức to: dấu "?" đầu tiên là ô trả lời, {kg} {l} {cm} là đơn vị (chữ nhỏ hơn).
+      // raw: giữ nguyên chữ (câu hỏi tiếng Anh có dấu "?" thật)
+      function renderBig(big, asText, raw) {
+        const el = h('div.q-big', { class: asText ? 'text' : '' });
+        if (raw) { el.textContent = big; return el; }
+        const addText = (text) => text.split(/\{(\w+)\}/).forEach((t, j) => {
+          if (!t) return;
+          el.appendChild(j % 2 ? h('span.unit', t) : document.createTextNode(t));
+        });
+        String(big).split('?').forEach((part, k, arr) => {
+          addText(part);
+          if (k < arr.length - 1) {
+            if (!slot) { slot = h('span.slot', placeholder); el.appendChild(slot); }
+            else el.appendChild(document.createTextNode('?'));
+          }
+        });
+        return el;
+      }
+
+      function submit(value) {
+        if (busy || finished) return;
+        const q = qs[i];
+        const ok = App.QTypes[q.type].check(q, value);
+        ctrl.showResult(ok, value);
+        if (ok) { success(attempts === 0); return; }
+        attempts++;
+        combo = 0;
+        updateCombo();
+        App.Sound.play('wrong');
+        App.UI.petAnim(opts.pet, 'oops');
+        busy = true;
+        if (attempts < 2) {
+          showHint(q);
+          setTimeout(() => { busy = false; ctrl.retry(); }, 900);
+        } else {
+          ctrl.reveal();
+          fillSlot(q);
+          App.Rewards.recordAnswer(q, false);
+          showFeedback(false, q, false);
+          echo(q);
+        }
+      }
+
+      // Bài Tiếng Anh: đọc lại từ / câu đúng để bé nghe và nhớ
+      function echo(q) {
+        if (q.echo) setTimeout(() => { if (qs[i] === q) App.Speech.speak(q.echo, 'en'); }, 250);
+      }
+
+      // Dạng tự chấm (nối cặp) báo đã xong
+      function done(firstTryOk) {
+        if (busy || finished) return;
+        success(firstTryOk);
+      }
+
+      function success(firstTryOk) {
+        busy = true;
+        const q = qs[i];
+        if (firstTryOk) { firstTry++; combo++; } else combo = 0;
+        updateCombo();
+        App.Rewards.recordAnswer(q, firstTryOk);
+        fillSlot(q);
+        App.Sound.play('correct');
+        App.UI.petAnim(opts.pet, 'jump');
+        if (combo >= 3 && combo % 3 === 0) App.UI.confetti(25);
+        showFeedback(true, q, firstTryOk);
+        echo(q);
+      }
+
+      function fillSlot(q) {
+        if (!slot || (q.type !== 'choice' && q.type !== 'input')) return;
+        slot.textContent = slotText(q);
+        slot.classList.remove('typing', 'wrong');
+        slot.classList.add('filled');
+      }
+
+      // Gợi ý hiện bên dưới phần trả lời (không đẩy các nút lên xuống làm bé bấm nhầm)
+      function showHint(q) {
+        let el = area.querySelector('.q-hint');
+        if (!el) {
+          el = h('div.q-hint');
+          (rightCol || area).appendChild(el);
+        }
+        el.textContent = '💡 ' + (q.hint || pick(TRY_AGAIN));
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+
+      function showFeedback(good, q, firstTryOk) {
+        fb.className = 'feedback ' + (good ? 'good' : 'bad');
+        fb.innerHTML = '';
+        const title = good ? pick(PRAISE) : 'Chưa đúng rồi!';
+        let sub = '';
+        const ans = answerText(q);
+        // Lời giải đã bắt đầu bằng đáp án (câu tiếng Anh) thì gộp lại, khỏi lặp hai lần
+        if (!good) sub = ans && q.explain && ans.length > 2 && q.explain.startsWith(ans) ? 'Đáp án đúng: ' + q.explain
+          : (ans ? 'Đáp án đúng: ' + ans : '') + (q.explain ? '\n' + q.explain : '');
+        else if (!firstTryOk && q.explain) sub = q.explain;
+        sub = sub.trim();
+        fb.append(
+          h('div.fb-ico', good ? pick(PRAISE_ICON) : '🤔'),
+          h('div.fb-text', h('div.fb-title', title), sub && h('div.fb-sub', sub)),
+          sub && h('button.icon-btn', { 'aria-label': 'Đọc lời giải', onclick: () => talk(q.sayExplain || speakPlain(sub), q.lang || 'vi') }, '🔊'),
+          h('button.btn', { class: good ? 'green' : 'red', onclick: next }, 'Tiếp tục ▶'));
+        void fb.offsetWidth; // ép trình duyệt vẽ lại để hiệu ứng trượt lên chạy được
+        fb.classList.add('show');
+        // Đúng ngay lần đầu → tự sang câu sau (chờ đọc xong từ / câu tiếng Anh)
+        if (good && firstTryOk) timer = setTimeout(next, q.echo ? Math.min(4500, 1600 + q.echo.length * 55) : 1500);
+      }
+
+      function next() {
+        if (finished) return;
+        clearTimeout(timer);
+        fb.classList.remove('show');
+        App.Speech.stop();
+        i++;
+        if (i >= qs.length) {
+          finished = true;
+          opts.bar.style.width = '100%';
+          if (ctrl && ctrl.destroy) ctrl.destroy();
+          setTimeout(() => opts.onFinish({ total: qs.length, firstTry }), 350);
+        } else {
+          setTimeout(show, 120);
+        }
+      }
+
+      function updateCombo() {
+        if (opts.comboEl) opts.comboEl.textContent = combo >= 2 ? `🔥 ${combo}` : '';
+      }
+
+      // Bấm Enter để "Tiếp tục" khi dùng máy tính
+      const onKey = (e) => { if (e.key === 'Enter' && fb.classList.contains('show')) next(); };
+      document.addEventListener('keydown', onKey);
+
+      show();
+      const api = {
+        question: () => qs[i], // câu hỏi đang hiện (dùng khi kiểm thử)
+        destroy() {
+          finished = true;
+          clearTimeout(timer);
+          document.removeEventListener('keydown', onKey);
+          if (ctrl && ctrl.destroy) ctrl.destroy();
+          if (App.Engine.active === api) App.Engine.active = null;
+        },
+      };
+      App.Engine.active = api;
+      return api;
+    },
+  };
+})(window.App);

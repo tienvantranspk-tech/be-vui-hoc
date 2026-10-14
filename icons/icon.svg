@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<defs>
+<linearGradient id="g" x1="0" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#4f9bff"/><stop offset="1" stop-color="#9b5cf0"/></linearGradient>
+<clipPath id="c"><rect width="512" height="512" rx="116"/></clipPath>
+</defs>
+<g clip-path="url(#c)">
+<rect width="512" height="512" fill="url(#g)"/>
+<circle cx="430" cy="78" r="130" fill="#fff" opacity=".10"/>
+<path d="M-10 420 C110 362 200 370 290 400 C380 430 450 416 522 382 V522 H-10 Z" fill="#34c463"/>
+<path d="M-10 468 C120 428 240 444 330 460 C420 476 470 468 522 450 V522 H-10 Z" fill="#22b573"/>
+<path d="M104 78 C108.68 99.32 108.68 99.32 130 104 C108.68 108.68 108.68 108.68 104 130 C99.32 108.68 99.32 108.68 78 104 C99.32 99.32 99.32 99.32 104 78 Z" fill="#fff" opacity="0.95"/><path d="M414 284 C416.88 297.12 416.88 297.12 430 300 C416.88 302.88 416.88 302.88 414 316 C411.12 302.88 411.12 302.88 398 300 C411.12 297.12 411.12 297.12 414 284 Z" fill="#fff" opacity="0.85"/><path d="M86 287 C88.34 297.66 88.34 297.66 99 300 C88.34 302.34 88.34 302.34 86 313 C83.66 302.34 83.66 302.34 73 300 C83.66 297.66 83.66 297.66 86 287 Z" fill="#fff" opacity="0.8"/>
+</g>
+<path d="M256.0 94.0 L301.8 198.9 L415.8 210.1 L330.2 286.1 L354.7 397.9 L256.0 340.0 L157.3 397.9 L181.8 286.1 L96.2 210.1 L210.2 198.9 Z" fill="#e39400" stroke="#e39400" stroke-width="34" stroke-linejoin="round" transform="translate(0 12)"/>
+<path d="M256.0 94.0 L301.8 198.9 L415.8 210.1 L330.2 286.1 L354.7 397.9 L256.0 340.0 L157.3 397.9 L181.8 286.1 L96.2 210.1 L210.2 198.9 Z" fill="#ffc531" stroke="#ffc531" stroke-width="34" stroke-linejoin="round"/>
+<path d="M200 160 C214 140 236 128 256 124" stroke="#fff3c4" stroke-width="14" fill="none" stroke-linecap="round" opacity=".8"/>
+<circle cx="224" cy="258" r="17" fill="#4a3200"/><circle cx="288" cy="258" r="17" fill="#4a3200"/>
+<circle cx="230" cy="251" r="6" fill="#fff"/><circle cx="294" cy="251" r="6" fill="#fff"/>
+<path d="M222 294 Q256 328 290 294" stroke="#4a3200" stroke-width="13" fill="none" stroke-linecap="round"/>
+<ellipse cx="196" cy="290" rx="17" ry="11" fill="#ff8fb1" opacity=".75"/><ellipse cx="316" cy="290" rx="17" ry="11" fill="#ff8fb1" opacity=".75"/>
+</svg>
