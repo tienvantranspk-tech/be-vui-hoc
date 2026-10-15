@@ -34,7 +34,7 @@
         b.val = o;
         return b;
       });
-      const optsCls = [views ? 'pics' : '', cls === 'text' ? 'texts' : '', 'n' + q.options.length, q.optsClass || ''].join(' ');
+      const optsCls = [views ? 'pics' : '', cls === 'text' ? 'texts' : '', 'n' + q.options.length, q.optsClass || '', q.skin ? 'skin skin-' + q.skin : ''].join(' ');
       area.appendChild(h('div.opts', { class: optsCls }, btns));
       return {
         showResult(ok, val) {

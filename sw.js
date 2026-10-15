@@ -1,6 +1,6 @@
 /* Bộ nhớ đệm của app (PWA): cất sẵn toàn bộ app trong máy để mở nhanh và chơi được khi không có mạng.
    MỖI LẦN SỬA APP: tăng VERSION (ví dụ ...-2) để máy tính bảng tự tải bản mới ở lần mở sau. */
-const VERSION = 'bvh-2026-10-14-4';
+const VERSION = 'bvh-2026-10-15-3';
 const FONTS = 'bvh-fonts';
 
 // Các tệp của app (thêm tệp mới vào index.html thì nhớ thêm vào đây)
@@ -24,21 +24,29 @@ const SHELL = [
   'js/data/schedule.js',
   'js/core/rewards.js',
   'js/core/report.js',
+  'js/core/tasks.js',
   'js/core/ui.js',
   'js/games/visuals.js',
   'js/games/qtypes.js',
+  'js/games/qtypes2.js',
+  'js/games/qtypes3.js',
+  'js/games/qtypes4.js',
   'js/games/engine.js',
   'js/subjects/toan-gen.js',
   'js/subjects/toan-gen2.js',
   'js/subjects/toan-gen3.js',
+  'js/subjects/toan-sach.js',
   'js/subjects/toan.js',
   'js/subjects/toan-nangcao.js',
   'js/subjects/tiengviet-data.js',
+  'js/subjects/tiengviet-data2.js',
   'js/subjects/tiengviet-gen.js',
+  'js/subjects/tiengviet-sach.js',
   'js/subjects/tiengviet.js',
   'js/subjects/tiengviet-nangcao.js',
   'js/subjects/tienganh-data.js',
   'js/subjects/tienganh-gen.js',
+  'js/subjects/tienganh-sach.js',
   'js/subjects/tienganh.js',
   'js/subjects/tienganh-nangcao.js',
   'js/screens/setup.js',

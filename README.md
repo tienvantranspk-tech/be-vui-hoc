@@ -45,6 +45,28 @@ Muốn chuyển sang máy khác thì dùng **Sao lưu dữ liệu** trong Góc p
 - [x] **Bảng đánh giá cho phụ huynh:** 5 thẻ Tổng quan · Theo môn · Tiến bộ · Báo cáo tuần · Cài đặt – so sánh với tuần trước,
       xếp loại từng môn, năng lực – phẩm chất, so với tiến độ ở lớp, gợi ý tuần này, biểu đồ nhiều tuần, lịch học 12 tuần,
       mục tiêu tuần, báo cáo tuần lưu thành ảnh / gửi Zalo – xem mục [Góc phụ huynh](#góc-phụ-huynh).
+- [x] **Dạng bài bám sách giáo khoa và vở bài tập** (tháng 10/2026) – xem mục [Các dạng bài](#các-dạng-bài).
+
+## Các dạng bài
+
+Mỗi câu có ô số thứ tự như trong vở (1, 2, 3…); app tự xếp để không có quá 2 câu cùng một kiểu đứng liền nhau.
+- **Toán:** chọn đáp án, nhập số, và các dạng như vở bài tập: **"Số?" nhiều ô** (bảng Số hạng – Tổng…, chuỗi mũi tên, sơ đồ tách – gộp,
+  dãy số, hoàn thành bảng cộng/trừ/nhân/chia), **"Đ, S?"** (cả phép đặt tính sai cột, quên nhớ), **">, <, = ?" nhiều dòng**,
+  **khoanh vào / tô màu** (phép tính, hình tứ giác, khối cầu – khối trụ, tờ tiền), **Bài giải 3 bước** (câu lời giải → phép tính → đáp số kèm đơn vị),
+  **Đặt tính rồi tính** (bé tự đặt số thẳng cột rồi tính, có ô ghi "nhớ 1"), **quay kim đồng hồ**, **nối điểm** (đường gấp khúc,
+  hình tứ giác, vẽ đoạn thẳng trên thước, chọn ba điểm thẳng hàng). Bài 7 và Bài 11 có thêm chặng Luyện tập.
+- **Tiếng Việt:** mỗi bài trong sách là một chặng, chia phần như sách – bài lẻ: 📖 Đọc · ✍️ Viết (tô chữ hoa theo nét bằng ngón tay)
+  · 🗣️ Nói và nghe (xếp tranh kể chuyện, đáp lời theo tình huống); bài chẵn: 📖 Đọc · 🔤 Chính tả (nghe – viết, điền c/k, g/gh, vần, dấu thanh, Đ/S)
+  · 🧩 Luyện từ và câu (gạch dưới từ ngữ, bộ phận câu, ghép câu, điền từ và dấu câu vào đoạn văn) · 📝 Luyện viết đoạn (sắp xếp câu thành đoạn).
+- **Tiếng Anh:** mỗi Unit 3 chặng như Lesson 1–2–3 của sách: Listen and repeat, **Point and say** (bé nói, máy nghe giọng – cần mạng và micrô;
+  máy không nghe được thì bé tự bấm "Con đã nói"), **Listen and chant** (vè), Listen and tick, **Listen and number**, **Look and write**,
+  **Let's talk** (hội thoại), **Let's sing**; Fun time có **Find and circle** (tìm từ trong bảng chữ), Review có **Read and tick** (✓ ✗).
+- **Trò chơi:** thanh tiến độ là đường đua 🏎️ → 🏁; một số câu có đáp án là bóng bay, cá bơi, hộp quà; chặng ôn tập cuối mỗi chủ đề có **trùm cuối**
+  (mỗi câu đúng ngay là một đòn đánh).
+- **👨‍👩‍👧 Nhiệm vụ cùng bố mẹ:** trong bài Tiếng Việt, bé đọc to bài đọc (ghi âm được) và viết đoạn văn vào vở; bố mẹ nghe, xem vở rồi chấm sao
+  ở Góc phụ huynh (mỗi sao 3 xu). Tắt được ở ⚙️ Cài đặt.
+- **📖 Bài đọc tuần này:** bố mẹ gõ vài câu trong bài đọc của bé (⚙️ Cài đặt), app tạo bài điền từ, sắp xếp câu, đọc to.
+- **📅 Tuần này ở lớp:** trang chủ hiện bài lớp đang học ở cả ba môn, bấm là vào đúng bài đó.
 
 ## Mức độ câu hỏi
 
@@ -159,6 +181,9 @@ tai-lieu/               Bản đồ chương trình lớp 2 (mục lục 3 môn,
 - `js/subjects/toan-gen.js` (Chủ đề 1–2) và `js/subjects/toan-gen2.js` (Chủ đề 3–7): cách tạo từng dạng câu hỏi.
   Mỗi lần chơi, câu hỏi được tạo ngẫu nhiên nên bé luyện bao nhiêu lần cũng có bài mới.
 - `js/subjects/toan-gen3.js` (Chủ đề 8–14): câu hỏi học kì 2.
+- `js/subjects/toan-sach.js`: bài dạng vở bài tập (Số? nhiều ô, Đ/S, >,<,=, khoanh vào, bài giải 3 bước, đặt tính, đồng hồ, nối điểm).
+- `js/games/qtypes2.js`, `qtypes3.js`, `qtypes4.js`: giao diện các dạng bài mới (nhiều ô, nhiều dòng, chạm chọn, điền chỗ trống,
+  bài giải, đặt tính, tô chữ, đồng hồ, nối điểm, luyện nói, tìm chữ, nhiệm vụ cùng bố mẹ).
 - `js/subjects/toan-nangcao.js`: câu hỏi nâng cao và chặng Thử thách của từng chủ đề
   (tương tự: `tiengviet-nangcao.js`, `tienganh-nangcao.js`).
 - `js/games/visuals.js`: các hình minh họa (khung 10 ô, tia số, cân đĩa, can nước, đồng hồ, tờ lịch, thước kẻ, hình học,
@@ -166,14 +191,17 @@ tai-lieu/               Bản đồ chương trình lớp 2 (mục lục 3 môn,
 
 ## Muốn chỉnh nội dung Tiếng Việt?
 
-- `js/subjects/tiengviet.js`: danh sách chủ điểm, chặng (theo tuần) và các dạng câu của từng chặng.
+- `js/subjects/tiengviet.js`: danh sách chủ điểm và bài (mỗi bài một chặng, chia phần Đọc, Viết, Chính tả…).
 - `js/subjects/tiengviet-data.js`: kho từ chính tả, từ ngữ theo chủ đề, câu mẫu và các bài đọc ngắn — thêm từ mới vào đây là app tự dùng.
+- `js/subjects/tiengviet-data2.js`: câu có đánh dấu loại từ, đoạn văn có chỗ trống, đoạn cần điền dấu câu, câu ứng dụng chữ hoa, tình huống đáp lời,
+  tranh kể chuyện, đoạn văn để sắp xếp, câu Đ/S cho bài đọc. `tiengviet-sach.js`: các dạng bài mới.
 
 ## Muốn chỉnh nội dung Tiếng Anh?
 
 - `js/subjects/tienganh-data.js`: từ vựng của 16 Unit (nghĩa tiếng Việt, hình emoji hoặc hình vẽ, chữ/âm trọng tâm),
   các mẫu câu (`tpl`) và các cặp hỏi – đáp để ôn. Thêm một từ: thêm một dòng vào `words` và tên từ vào `units` của Unit đó.
 - `js/subjects/tienganh-gen.js`: cách tạo từng dạng câu hỏi tiếng Anh.
-- `js/subjects/tienganh.js`: danh sách chặng (2 chặng mỗi Unit, Fun time, Review) và số câu mỗi dạng.
+- `js/subjects/tienganh-sach.js`: Point and say, chant, Listen and number, Look and write, Let's talk, Let's sing, Read and tick, Find and circle.
+- `js/subjects/tienganh.js`: danh sách chặng (3 chặng mỗi Unit như Lesson 1–3, Fun time, Review) và số câu mỗi dạng.
 - Giọng đọc tiếng Anh dùng giọng có sẵn trên máy. Trên máy tính bảng Android, nếu giọng đọc nghe chưa rõ thì vào
   *Cài đặt → Hệ thống → Ngôn ngữ → Đầu ra chuyển văn bản thành lời nói* và tải giọng *English (United States)* của Google.

@@ -21,6 +21,7 @@
       if (!top) return 'other';
       const sid = top.params && top.params.subject;
       if (['play', 'result', 'map'].includes(top.name) && ['toan', 'tv', 'ta', 'review'].includes(sid)) return sid;
+      if (sid === 'weektext') return 'tv';
       if (top.name === 'pet' || top.name === 'album') return 'pet';
       return 'other';
     };

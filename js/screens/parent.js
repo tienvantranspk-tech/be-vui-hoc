@@ -138,6 +138,8 @@
       h('p.muted', { style: { marginTop: '.5rem' } },
         `Hôm nay: ${Math.round(today.sec / 60)} phút · ${tl.n} câu${tl.n ? ` · đúng ngay ${Rp.pct(tl.ok, tl.n)}%` : ''} · 🔥 chuỗi ${R.streakNow()} ngày (dài nhất ${st.streak.best} ngày)`)));
 
+    if (App.Tasks.list().length) cards.push(tasksCard());
+
     cards.push(card('🏅 Xếp loại theo môn',
       Rp.SUBJ.map((sid) => h('div.sub-rate',
         h('div.sr-name', `${Rp.icon(sid)} ${Rp.name(sid)}`),
@@ -378,10 +380,72 @@
     }
   }
 
+  // ---- Nhiệm vụ cùng bố mẹ: nghe bé đọc, xem vở rồi chấm sao ----
+  function tasksCard() {
+    return liveCard((draw) => {
+      const list = App.Tasks.list();
+      const pend = list.filter((t) => t.stars == null);
+      const done = list.filter((t) => t.stars != null).slice(0, 3);
+      const when = (t) => new Date(t).toLocaleString('vi-VN', { weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const row = (t) => {
+        const audioBox = h('div.tk-audio');
+        const play = t.audio ? h('button.btn.small.white', { onclick: async () => {
+          const url = await App.Tasks.audioUrl(t.id);
+          if (!url) { App.UI.toast('⚠️ Không tìm thấy tệp ghi âm trên máy này'); return; }
+          audioBox.innerHTML = '';
+          audioBox.appendChild(h('audio', { controls: true, autoplay: true, src: url }));
+        } }, '▶ Nghe bé đọc') : null;
+        const stars = [1, 2, 3].map((n) => h('button.btn.small.gold', { onclick: () => {
+          const c = App.Tasks.grade(t.id, n);
+          App.Sound.play('coin');
+          App.UI.toast(`Đã chấm ${'⭐'.repeat(n)} – bé được ${c} xu`);
+          draw();
+        } }, '⭐'.repeat(n)));
+        return h('div.task-row',
+          h('div.lbl', `${t.kind === 'read' ? '🎙️' : '✍️'} ${t.title}`, h('small', `${when(t.t)} · ${t.detail}${t.kind === 'read' && !t.audio ? ' (đọc trực tiếp, không có ghi âm)' : ''}`)),
+          h('div.p-actions', play, ...stars), audioBox);
+      };
+      return [
+        h('h3', `👨‍👩‍👧 Nhiệm vụ cùng bố mẹ${pend.length ? ` · ${pend.length} bài chờ chấm` : ''}`),
+        pend.length ? pend.slice(0, 8).map(row) : empty('Không có bài nào đang chờ chấm.'),
+        done.length ? h('h4', 'Đã chấm gần đây') : null,
+        ...done.map((t) => h('div.p-row', h('div.lbl', `${t.kind === 'read' ? '🎙️' : '✍️'} ${t.title}`, h('small', when(t.t))), chip('⭐'.repeat(t.stars), 'good'))),
+        h('p.muted', { style: { marginTop: '.5rem' } }, 'Trong các bài Tiếng Việt, bé gửi bài đọc to (có ghi âm) và bài viết vào vở. Bố mẹ nghe, xem vở rồi chấm sao: mỗi sao bé được 3 xu. Tắt nhiệm vụ ở thẻ ⚙️ Cài đặt.'),
+      ];
+    });
+  }
+
+  // ---- Bài đọc tuần này: bố mẹ gõ đoạn văn trong sách của bé, app tạo bài luyện ----
+  function weekTextCard() {
+    const st = App.Store.state;
+    return liveCard((draw) => {
+      const wt = st.weekText;
+      const title = h('input.text-input.wide', { value: wt ? wt.title : '', placeholder: 'Tên bài (ví dụ: Cái trống trường em)', maxlength: 60 });
+      const text = h('textarea.text-input.wide', { rows: 6, placeholder: 'Gõ hoặc dán vài câu trong bài đọc của bé (ít nhất 3 câu)…' });
+      text.value = wt ? wt.text : '';
+      return [
+        h('h3', '📖 Bài đọc tuần này'),
+        h('p.muted', 'Bố mẹ gõ (hoặc dán) đoạn văn trong sách Tiếng Việt bé đang học trên lớp. App tạo bài luyện: điền từ còn thiếu, sắp xếp câu, đọc to cho bố mẹ nghe. Nút “📖 Bài đọc tuần này” hiện ở trang chủ của bé. Đoạn văn chỉ lưu trên máy này.'),
+        title, text,
+        h('div.p-actions',
+          h('button.btn.small.green', { onclick: () => {
+            const t = text.value.replace(/\s+/g, ' ').trim();
+            if ((t.match(/[.!?…]/g) || []).length < 2 || t.length < 40) { App.UI.toast('⚠️ Bố mẹ gõ ít nhất 2–3 câu (có dấu chấm) nhé'); return; }
+            st.weekText = { title: title.value.trim() || 'Bài đọc tuần này', text: t, at: Date.now() };
+            App.Store.save();
+            App.Sound.play('coin');
+            App.UI.toast('✅ Đã lưu. Bé mở “📖 Bài đọc tuần này” ở trang chủ nhé!');
+            draw();
+          } }, '💾 Lưu bài đọc'),
+          wt ? h('button.btn.small.white', { onclick: () => { st.weekText = null; App.Store.save(); draw(); } }, 'Xóa') : null),
+      ];
+    });
+  }
+
   // ================= ⚙️ Cài đặt =================
   function viewSettings() {
     const st = App.Store.state;
-    const cards = [levelCard(), goalCard(), schoolWeekCard(), limitCard()];
+    const cards = [levelCard(), goalCard(), schoolWeekCard(), limitCard(), weekTextCard()];
     const all = st.mistakes.slice(0, 6);
     cards.push(card(`📝 Câu sai đang chờ ôn${st.mistakes.length ? ` (${R.mistakeCount()} câu)` : ''}`,
       all.length ? all.map((m) => { const row = mistakeRow(m); row.firstChild.prepend(P().icon(m.sid) + ' '); return row; }) : empty('Chưa có câu sai nào. Giỏi quá! 🎉'),
@@ -407,6 +471,7 @@
       toggle('voice', 'Giọng đọc', `Giọng Việt: ${viVoice ? 'có ✅' : 'chưa có ⚠️'} · Giọng Anh: ${enVoice ? 'có ✅' : 'chưa có ⚠️'}`),
       toggle('autoRead', 'Tự đọc đề bài', 'Máy tự đọc mỗi câu hỏi (hợp với bé đọc còn chậm)'),
       toggle('unlockAll', 'Mở khóa tất cả các chặng', 'Cho bé chọn bài bất kỳ (ví dụ bài đang học trên lớp)'),
+      toggle('parentTasks', 'Nhiệm vụ cùng bố mẹ', 'Trong bài Tiếng Việt có nhiệm vụ đọc to (ghi âm) và viết vào vở để bố mẹ chấm'),
       installRow(),
       h('div.p-row', h('div.lbl', 'Tên của bé', h('small', st.profile.name)), h('button.btn.small.white', { onclick: rename }, 'Đổi tên')),
       h('div.p-row', h('div.lbl', 'Xóa toàn bộ dữ liệu', h('small', 'Sao, xu, thú cưng, sticker sẽ mất hết')), h('button.btn.small.red', { onclick: resetAll }, 'Xóa'))));

@@ -140,7 +140,7 @@
     const idxOf = (id) => list.findIndex((x) => x.stage.id === id);
     const doneTo = week >= 2 ? idxOf(sched[week - 2]) : -1; // tuần trước đã học xong đến đây
     const now = list[idxOf(sched[week - 1])] || null;        // tuần này lớp học tới đây
-    const missing = list.filter((x, i) => i <= doneTo && !R.done(x.key));
+    const missing = list.filter((x, i) => i <= doneTo && !R.done(x.key) && !x.stage.extra); // chặng Luyện tập thêm không tính là chậm
     const ahead = list.filter((x, i) => i > idxOf(sched[week - 1]) && R.done(x.key)).length;
     return { week, now, missing, ahead, status: missing.length ? 'cham' : ahead ? 'truoc' : 'dung' };
   };

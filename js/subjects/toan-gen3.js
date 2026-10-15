@@ -503,6 +503,7 @@
     lines.push(`Vậy ${a} ${op} ${b} = ${op === '+' ? a + b : a - b}.`);
     return lines.join('\n');
   }
+  App.Gen.toanUtil.explainColumn = explainColumn; // dùng lại cho bài đặt tính (toan-sach.js)
   function calc1000(kind, vertical) {
     const [a, b] = pair1000(kind);
     const add = kind[0] === 'a', op = add ? '+' : '−', res = add ? a + b : a - b;

@@ -7,7 +7,8 @@
   App.Screens.result = {
     render(p) {
       const { reward } = p;
-      const review = p.subject === 'review'; // vừa ôn lại câu sai
+      const review = p.subject === 'review' || p.subject === 'weektext'; // vừa ôn lại câu sai / luyện bài đọc tuần này
+      const weektext = p.subject === 'weektext';
       const sub = review ? null : App.Curriculum[p.subject];
       const st = App.Store.state;
       const titles = { 3: 'Xuất sắc! 🏆', 2: 'Giỏi lắm! 🎉', 1: 'Hoàn thành! 👍' };
@@ -19,8 +20,8 @@
         1: 'Bé đã cố gắng! Chơi lại để giỏi hơn nữa nào!',
       };
       const next = review ? null : R.nextStage(sub, R.key(p.subject, p.topic, p.stage));
-      const title = review ? (reward.left ? 'Ôn tập xong! 💪' : 'Sửa hết lỗi rồi! 🏆') : titles[reward.stars];
-      const subText = review
+      const title = weektext ? 'Luyện bài đọc xong! 📖' : review ? (reward.left ? 'Ôn tập xong! 💪' : 'Sửa hết lỗi rồi! 🏆') : titles[reward.stars];
+      const subText = weektext ? `Bé làm đúng ngay ${p.firstTry}/${p.total} bài.` : review
         ? `Bé sửa đúng ${p.firstTry}/${p.total} câu.` + (reward.left ? ` Còn ${reward.left} câu cần ôn thêm.` : ' Không còn câu sai nào nữa! 🎉')
         : subs[reward.stars];
 
@@ -40,7 +41,7 @@
         review
           ? h('div.result-actions',
             h('button.btn.white', { onclick: () => App.Router.home() }, '🏠 Trang chủ'),
-            reward.left ? h('button.btn.orange', { onclick: () => App.Router.go('play', { subject: 'review' }, { replace: true }) }, '🔁 Ôn tiếp') : null)
+            !weektext && reward.left ? h('button.btn.orange', { onclick: () => App.Router.go('play', { subject: 'review' }, { replace: true }) }, '🔁 Ôn tiếp') : null)
           : h('div.result-actions',
             h('button.btn.white', { onclick: () => App.Router.go('play', pick(p), { replace: true }) }, '🔁 Chơi lại'),
             h('button.btn.orange', { onclick: () => toMap(p.subject) }, '🗺️ Bản đồ'),

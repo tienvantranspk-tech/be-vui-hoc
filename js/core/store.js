@@ -3,7 +3,7 @@
   'use strict';
   const KEY = 'bevuihoc.lop2';   // chỗ lưu trong trình duyệt
 
-  const VERSION = 3;
+  const VERSION = 5;
   function defaults() {
     return {
       version: VERSION,
@@ -24,11 +24,16 @@
       // Các lần chơi chặng gần đây: { t, sid, tid, id, n, ok, an, ao, s (sao), sec, nw (lần đầu qua chặng) }
       history: [],
       counters: { fixed: 0 }, // số câu sai bé đã tự sửa được khi ôn lại
+      // Nhiệm vụ cùng bố mẹ (đọc to có ghi âm, viết vào vở): { id, t, kind, title, detail, sid, audio, stars (bố mẹ chấm), seen }
+      tasks: [],
+      // Bài đọc tuần này do bố mẹ gõ (lấy từ sách của bé): { title, text, at }
+      weekText: null,
       streak: { cur: 0, best: 0, last: null },
       // dailyLimit: số phút được học mỗi ngày (0 = không giới hạn)
       // level: 'co-ban' (chỉ câu theo sách giáo khoa) | 'tron' (xen khoảng 3/10 câu nâng cao) | 'nang-cao' (xen khoảng 5/10)
       // goalDays, goalMin: mục tiêu mỗi tuần học mấy ngày, mỗi ngày mấy phút · weekShift: chỉnh lệch tuần học so với lịch ước tính
-      settings: { sound: true, voice: true, autoRead: false, unlockAll: false, dailyLimit: 0, level: 'tron', goalDays: 5, goalMin: 20, weekShift: 0 },
+      // parentTasks: có xen nhiệm vụ cùng bố mẹ (ghi âm đọc bài, viết vào vở) vào các bài Tiếng Việt hay không
+      settings: { sound: true, voice: true, autoRead: false, unlockAll: false, dailyLimit: 0, level: 'tron', goalDays: 5, goalMin: 20, weekShift: 0, parentTasks: true },
     };
   }
   // Nâng cấp dữ liệu cũ: bản 1 mặc định "chỉ cơ bản" → bản 2 mặc định trộn câu cơ bản với câu nâng cao
@@ -50,6 +55,28 @@
         }
       }
       st.version = 3;
+    }
+    // Bản 4: Tiếng Việt tách mỗi chặng "Bài 1–2" thành hai chặng "Bài 1", "Bài 2" (theo sách).
+    // Chặng cũ (id bài lẻ) bé đã qua thì chặng bài chẵn mới cũng tính là đã qua, cùng số sao – bé không phải học lại.
+    if (st.version < 4) {
+      for (const [k, v] of Object.entries(st.progress)) {
+        const m = /^tv\/(t\d+)\/([bc])(\d+)$/.exec(k);
+        if (!m || Number(m[3]) % 2 === 0) continue;
+        const k2 = `tv/${m[1]}/${m[2]}${Number(m[3]) + 1}`;
+        if (!st.progress[k2]) st.progress[k2] = { ...v, plays: 0 };
+      }
+      st.version = 4;
+    }
+    // Bản 5: mỗi Unit Tiếng Anh có thêm chặng Lesson 2 (u…m) giữa Lesson 1 và Lesson 3.
+    // Bé đã qua chặng Từ mới cũ (Lesson 1) thì Lesson 2 cũng tính là đã qua (nội dung cũ đã gồm chữ cái, âm, xếp chữ).
+    if (st.version < 5) {
+      for (const [k, v] of Object.entries(st.progress)) {
+        const m = /^ta\/(t\d+)\/u(\d+)a$/.exec(k);
+        if (!m) continue;
+        const k2 = `ta/${m[1]}/u${m[2]}m`;
+        if (!st.progress[k2]) st.progress[k2] = { ...v, plays: 0 };
+      }
+      st.version = 5;
     }
     return st;
   }

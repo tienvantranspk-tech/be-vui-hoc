@@ -23,7 +23,7 @@
   R.done = (key) => !!S().progress[key];
   R.starsOf = (key) => (S().progress[key] ? S().progress[key].stars : 0);
   R.isUnlocked = (subject, key) => {
-    if (S().settings.unlockAll) return true;
+    if (S().settings.unlockAll || R.done(key)) return true; // chặng đã qua thì luôn chơi lại được (kể cả khi có chặng mới chèn vào trước)
     const list = R.stages(subject, { all: true });
     const i = list.findIndex((x) => x.key === key);
     if (i < 0) return false;
@@ -31,8 +31,13 @@
     for (let j = i - 1; j >= 0; j--) if (!list[j].stage.bonus) return R.done(list[j].key);
     return true;
   };
+  // Chặng hiện tại: chặng chưa qua đầu tiên sau chặng xa nhất bé đã qua
+  // (chặng mới thêm vào phía trước – như chặng Luyện tập – không kéo bé lùi lại)
   R.currentKey = (subject) => {
-    const x = R.stages(subject).find((s) => !R.done(s.key));
+    const list = R.stages(subject);
+    let last = -1;
+    list.forEach((s, i) => { if (R.done(s.key)) last = i; });
+    const x = list.slice(last + 1).find((s) => !R.done(s.key)) || list.find((s) => !R.done(s.key));
     return x ? x.key : null;
   };
   // Chặng tiếp theo: gợi ý cả chặng thử thách nếu bé chưa chơi
@@ -95,6 +100,7 @@
     w.sub[cat] = (w.sub[cat] || 0) + sec;
   };
   R.recordAnswer = (q, ok) => {
+    if (q.noStat) return; // nhiệm vụ cùng bố mẹ: không tính là câu đúng / sai
     const st = S();
     const sk = q.skill || 'khac';
     const day = R.today(), wk = R.week();
@@ -164,12 +170,12 @@
     return out;
   };
   // Ôn xong: thưởng xu (1 xu mỗi câu sửa đúng + 3 xu chăm chỉ), thú cưng vui hơn
-  R.completeReview = function ({ total, firstTry, sec = 0 }) {
+  R.completeReview = function ({ total, firstTry, sec = 0, sid = 'review' }) {
     const st = S();
     const coins = firstTry + 3;
     st.coins += coins;
     R.touchStreak();
-    R.logPlay({ sid: 'review', tid: '', id: 'review', n: total, ok: firstTry, an: 0, ao: 0, s: R.starsFor(total, firstTry), sec, nw: false });
+    R.logPlay({ sid, tid: '', id: sid, n: total, ok: firstTry, an: 0, ao: 0, s: R.starsFor(total, firstTry), sec, nw: false });
     let levelUp = false;
     const pet = st.pet;
     if (pet) {

@@ -24,15 +24,22 @@
       seen.add(sig(q));
       return q;
     };
-    for (const [gen, n] of stage.plan) for (let k = 0; k < n; k++) out.push(make(gen));
-    if (stage.shuffle) out = App.U.shuffle(out);
+    const build = (plan) => { const a = []; for (const [gen, n] of plan) for (let k = 0; k < n; k++) a.push(make(gen)); return a; };
+    if (stage.sections) {
+      // Chặng theo một bài trong sách: các phần (Đọc, Viết, Chính tả…) lần lượt như trong sách, mỗi phần có nhãn riêng
+      out = stage.sections.flatMap((sec) => App.spreadTypes(build(sec.plan)).map((q) => { q.part = sec.label; return q; }));
+    } else {
+      out = build(stage.plan);
+      if (stage.shuffle) out = App.U.shuffle(out);
+    }
     if (stage.bonus) out.forEach((q) => { q.tag = '🧠 Thử thách'; q.lv = 'nc'; });
     const st = App.Store.state;
     const ratio = (st && ADV_RATIO[st.settings.level]) || 0;
     const adv = !stage.bonus && ratio && stage.adv;
     if (adv && (adv.cur.length || adv.prev.length)) {
-      const k = Math.max(2, Math.round(out.length * ratio));
-      const drop = new Set(App.U.sample(out.map((_, i) => i), k));
+      // Chặng theo bài: thêm câu nâng cao ở cuối (không bỏ phần nào của bài); chặng thường: thay một số câu cơ bản
+      const k = stage.sections ? Math.max(1, Math.round(out.length * ratio * 0.6)) : Math.max(2, Math.round(out.length * ratio));
+      const drop = new Set(stage.sections ? [] : App.U.sample(out.map((_, i) => i), k));
       // ưu tiên dạng nâng cao của chủ đề đang học, không lặp một dạng khi còn dạng khác
       const cur = App.U.shuffle(adv.cur), prev = App.U.shuffle(adv.prev);
       out = out.filter((_, i) => !drop.has(i));
@@ -42,8 +49,32 @@
         const q = make(list[j % list.length]);
         q.tag = '🔥 Nâng cao';
         q.lv = 'nc';
-        out.splice(App.U.rand(1, out.length), 0, q); // xen vào giữa các câu cơ bản (câu đầu tiên luôn là câu cơ bản)
+        if (stage.sections) { q.part = '🔥 Thử sức'; out.push(q); }
+        else out.splice(App.U.rand(1, out.length), 0, q); // xen vào giữa các câu cơ bản (câu đầu tiên luôn là câu cơ bản)
       }
+    }
+    if (!stage.sections) out = App.spreadTypes(out);
+    // Trò chơi nhỏ: câu chọn đáp án ngắn (số, dấu, chữ) đôi khi hiện đáp án thành bóng bay, cá bơi, hộp quà
+    const SKINS = ['balloon', 'fish', 'gift'];
+    out.forEach((q) => {
+      if (q.type === 'choice' && !q.views && !q.skin && q.optStyle !== 'text' && q.options.every((o) => String(o).length <= 6) && Math.random() < 0.35) q.skin = App.U.pick(SKINS);
+    });
+    out.forEach((q, k) => { q._no = k + 1; }); // số thứ tự bài tập, hiện như trong vở: 1, 2, 3…
+    return out;
+  };
+
+  // "Kiểu" của câu theo cái bé nhìn thấy: dạng thao tác + hình minh họa + kiểu đáp án
+  App.kindOf = (q) => [q.type, q.visual ? q.visual.kind : '', q.type === 'choice' ? q.optStyle || (q.views ? 'pic' : '') : '', q.mode || ''].join(':');
+  // Trộn dạng bài: không để quá 2 câu cùng một kiểu đứng liền nhau (giữ gần đúng thứ tự cũ)
+  App.spreadTypes = function (list) {
+    const out = [], rest = list.slice();
+    const K = App.kindOf;
+    while (rest.length) {
+      const n = out.length;
+      const bad = (q) => n >= 2 && K(out[n - 1]) === K(q) && K(out[n - 2]) === K(q);
+      let k = rest.findIndex((q) => !bad(q));
+      if (k < 0) k = 0;
+      out.push(rest.splice(k, 1)[0]);
     }
     return out;
   };
@@ -79,7 +110,8 @@
   const answerText = (q) => {
     if (q.answerLabel) return q.answerLabel;
     if (q.type === 'order') return q.answer.join(', ');
-    if (q.type === 'match') return '';
+    if (q.type === 'match' || q.type === 'sort') return '';
+    if (Array.isArray(q.answer)) return q.answer.join(' · ');
     return slotText(q) + (q.unit ? ' ' + q.unit : '');
   };
   const speakText = (q) => q.speak ||
@@ -97,7 +129,7 @@
     .replace(/(\d|\()\s*l(?!\p{L})/gu, '$1 lít');
   // Những loại hình nên đặt bên trái, phần trả lời bên phải khi máy xoay ngang
   const SPLIT = new Set(['balance', 'balances', 'bottles', 'cups', 'jars', 'clock', 'digital', 'calendar',
-    'geo', 'ruler', 'shapes', 'grid', 'vertical', 'blocks', 'tenframe', 'scatter', 'bag', 'picto', 'money', 'listen', 'pic', 'svg']);
+    'geo', 'ruler', 'shapes', 'grid', 'vertical', 'blocks', 'tenframe', 'scatter', 'bag', 'picto', 'money', 'listen', 'pic', 'svg', 'chat']);
 
   App.Engine = {
     // root: vùng chơi; opts: { questions, bar, pet, comboEl, onFinish({ total, firstTry }) }
@@ -123,7 +155,8 @@
         const lang = q.lang || 'vi';
         area.appendChild(h('div.q-head',
           h('button.icon-btn', { 'aria-label': 'Đọc đề', onclick: () => talk(speakText(q), lang) }, '🔊'),
-          h('div.q-prompt', q.tag ? h('span.q-tag', q.tag) : null, q.prompt)));
+          q._no ? h('span.q-no', { 'aria-label': 'Bài ' + q._no }, String(q._no)) : null,
+          h('div.q-prompt', q.part && !q.tag ? h('span.q-part', q.part) : null, q.tag ? h('span.q-tag', q.tag) : null, q.prompt, q.sub ? h('div.q-sub', q.sub) : null)));
         const left = h('div.q-left');
         rightCol = h('div.q-right');
         if (q.passage) {
@@ -143,9 +176,9 @@
         }
         const answers = h('div.answers');
         rightCol.appendChild(answers);
-        const split = q.passage || (q.visual && SPLIT.has(q.visual.kind));
+        const split = q.passage || q.split || (q.visual && SPLIT.has(q.visual.kind));
         area.appendChild(h('div.q-body', { class: split ? 'split' : '' }, left, rightCol));
-        ctrl = App.QTypes[q.type].render(q, answers, { submit, done, slot, card: area });
+        ctrl = App.QTypes[q.type].render(q, answers, { submit, done, slot, card: area, left });
         // Tự đọc: cả đề (khi bật "Tự đọc đề bài"), hoặc chỉ phần cần nghe của bài nghe tiếng Anh
         const auto = App.Store.state.settings.autoRead || q.autoSpeak ? speakText(q) : q.autoSay;
         if (auto) setTimeout(() => { if (qs[i] === q && !finished) talk(auto, lang); }, 350);
@@ -188,6 +221,7 @@
           setTimeout(() => { busy = false; ctrl.retry(); }, 900);
         } else {
           ctrl.reveal();
+          if (opts.onAnswer) opts.onAnswer(false, false);
           fillSlot(q);
           App.Rewards.recordAnswer(q, false);
           showFeedback(false, q, false);
@@ -218,6 +252,7 @@
         App.Sound.play('correct');
         App.UI.petAnim(opts.pet, 'jump');
         if (combo >= 3 && combo % 3 === 0) App.UI.confetti(25);
+        if (opts.onAnswer) opts.onAnswer(true, firstTryOk);
         showFeedback(true, q, firstTryOk);
         echo(q);
       }

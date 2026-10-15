@@ -62,6 +62,27 @@
         h('div.w-go', soon ? '🔒' : '▶'));
       }));
 
+      // Tuần này ở lớp đang học bài nào (theo lịch năm học, bố mẹ chỉnh được) → bấm là vào đúng bài đó
+      const wk = App.Report.schoolWeek();
+      const today = SUBJECTS.map((sid) => ({ sid, sc: App.Report.school(sid, wk) })).filter((x) => x.sc.now);
+      if (today.length) {
+        worlds.prepend(h('div.today-card',
+          h('div.tc-title', `📅 Tuần ${wk} ở lớp đang học`),
+          h('div.tc-items', today.map(({ sid, sc }) => {
+            const x = sc.now, done = R.done(x.key);
+            return h('button.tc-item', { class: 'theme-' + sid, onclick: () => {
+              App.Sound.play('tap');
+              if (R.isUnlocked(App.Curriculum[sid], x.key)) App.Router.go('play', { subject: sid, topic: x.topic.id, stage: x.stage.id });
+              else { App.UI.toast('🔒 Bé làm các chặng trước trên bản đồ để mở bài này nhé!'); App.Router.go('map', { subject: sid }); }
+            } }, h('span.tc-ico', App.Curriculum[sid].icon), h('span.tc-txt', h('b', x.stage.short), h('small', x.stage.name)), h('span.tc-go', done ? '⭐' : '▶'));
+          }))));
+      }
+      // Bài đọc tuần này (bố mẹ gõ trong Góc phụ huynh)
+      if (App.WeekText && App.WeekText.has()) {
+        worlds.appendChild(h('button.review-card.weektext', { onclick: () => { App.Sound.play('tap'); App.Router.go('play', { subject: 'weektext' }); } },
+          h('span.rc-ico', '📖'), h('span.rc-text', h('b', 'Bài đọc tuần này'), h('small', `“${App.WeekText.title()}” · bố mẹ gửi cho bé luyện`)), h('span.rc-go', '▶')));
+      }
+
       // Ôn lại các câu bé làm sai gần đây
       const nMistakes = R.mistakeCount();
       if (nMistakes) {
@@ -75,6 +96,12 @@
 
       el.appendChild(h('div.home-body', petBox, worlds));
       el.appendChild(App.UI.bottomNav('home'));
+      // Bố mẹ vừa chấm nhiệm vụ → khen bé
+      const news = App.Tasks.takeNews();
+      if (news.length) {
+        const stars = news.reduce((s, t) => s + t.stars, 0);
+        setTimeout(() => { App.UI.toast(`👨‍👩‍👧 Bố mẹ đã chấm bài của bé: ${'⭐'.repeat(Math.min(stars, 9))} (+${stars * 3} xu) 🎉`, 4000); App.UI.confetti(30); }, 600);
+      }
       return el;
     },
   };
