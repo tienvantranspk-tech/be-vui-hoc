@@ -111,7 +111,7 @@
       { id: 't4', short: 'Unit 13–16', name: 'Số đếm, gia đình, quần áo, cắm trại', icon: '🏕️', stages: [
         ...unit(13), ...unit(14),
         { id: 'f4', short: 'Fun time 4', name: 'Vui học cùng Unit 13 và Unit 14', icon: '🎮', shuffle: true,
-          plan: [[E.numListen(11, 20), 1], [E.numMatch(11, 20), 1], [E.findWords(...ws(14)), 1], [E.readTick('u13.num', 'u14.my'), 1], [E.lookWrite(...ws(13, 14)), 1],
+          plan: [[E.numListen(11, 20), 1], [E.numMatch(11, 20), 1], [E.findWordsMore(ws(14), ws(13)), 1], [E.readTick('u13.num', 'u14.my'), 1], [E.lookWrite(...ws(13, 14)), 1],
             [E.numCount(11, 20), 1], [E.wordPic(...ws(14)), 1], [E.talkWrap(E.u14()), 1]] },
         ...unit(15), ...unit(16),
         review(4, [13, 14, 15, 16], [[E.talk('u13.num'), 1], [E.talkWrap(E.u14()), 1], [E.tplPick('u15.look', 'u14.my'), 1], [E.talkWrap(E.u16qa()), 1],

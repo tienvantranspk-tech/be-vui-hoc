@@ -30,6 +30,7 @@
       out = stage.sections.flatMap((sec) => App.spreadTypes(build(sec.plan)).map((q) => { q.part = sec.label; return q; }));
     } else {
       out = build(stage.plan);
+      if (stage.kinds && stage.pool) out = varyKinds(out, stage, make);
       if (stage.shuffle) out = App.U.shuffle(out);
     }
     if (stage.bonus) out.forEach((q) => { q.tag = '🧠 Thử thách'; q.lv = 'nc'; });
@@ -62,6 +63,21 @@
     out.forEach((q, k) => { q._no = k + 1; }); // số thứ tự bài tập, hiện như trong vở: 1, 2, 3…
     return out;
   };
+
+  // Chặng thử thách: có ít nhất stage.kinds dạng bài khác nhau (chọn đáp án, nhập số, điền ô trống, Đ/S, bài giải…).
+  // Thiếu thì tạo thêm câu từ các dạng trong stage.pool, thay vào chỗ câu của dạng đang có nhiều câu nhất.
+  function varyKinds(out, stage, make) {
+    const count = () => { const c = {}; out.forEach((q) => { c[q.type] = (c[q.type] || 0) + 1; }); return c; };
+    const gens = App.U.shuffle(stage.pool);
+    for (let t = 0; t < gens.length * 2 && Object.keys(count()).length < stage.kinds; t++) {
+      const q = make(gens[t % gens.length]);
+      const c = count();
+      if (c[q.type]) continue;
+      const top = Object.keys(c).reduce((a, b) => (c[a] >= c[b] ? a : b));
+      out[out.findIndex((x) => x.type === top)] = q;
+    }
+    return out;
+  }
 
   // "Kiểu" của câu theo cái bé nhìn thấy: dạng thao tác + hình minh họa + kiểu đáp án
   App.kindOf = (q) => [q.type, q.visual ? q.visual.kind : '', q.type === 'choice' ? q.optStyle || (q.views ? 'pic' : '') : '', q.mode || ''].join(':');
@@ -99,7 +115,7 @@
       if (pool.length < 6) pool = pool.concat(App.U.sample(prev.filter((g) => !pool.includes(g)), 6 - pool.length));
       if (pool.length && main.length && !topic.stages.some((s) => s.bonus)) {
         topic.stages.push({ id: 'tt-' + topic.id, short: '🧠 Thử thách', name: `Thử thách tư duy: ${topic.name}`, icon: '🧠',
-          bonus: true, shuffle: true, plan: [[mix(pool), 8]] });
+          bonus: true, shuffle: true, kinds: 3, pool, plan: [[mix(pool), 8]] });
       }
       if (!whole[topic.id]) list.forEach(([g]) => { if (!prev.includes(g)) prev.push(g); });
     });

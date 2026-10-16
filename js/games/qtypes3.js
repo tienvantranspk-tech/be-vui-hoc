@@ -13,16 +13,27 @@
   // ===================================================================
   // 1. Bài giải
   // q.solve: { a, op, b, res, line, lines:[3 câu lời giải], cls (đơn vị trong phép tính), ans (đơn vị đáp số), units:[3 đơn vị], ops:['+','−'] }
+  // Bài toán hai bước: q.solve.steps = [{ a, op, b, res, line, lines, cls, ops? }, …] – mỗi bước có câu lời giải và phép tính riêng,
+  //   res là kết quả bước cuối; ans, units dùng cho đáp số như trên.
   // ===================================================================
   QT.solve = {
     render(q, area, api) {
-      const S = q.solve;
+      const S0 = q.solve;
+      const steps = S0.steps || [S0];
+      const many = steps.length > 1;
+      let S = steps[0], si = 0; // si: bước đang làm
       let mistakes = 0, finished = false, onKey = null;
       const note = h('div.sv-hint');
       const hint = (t) => { note.textContent = '💡 ' + t; };
       const paper = h('div.sv-paper', h('div.sv-title', 'Bài giải'));
       const work = h('div.sv-work');
       area.append(paper, work, note); // gợi ý nằm dưới cùng: hiện ra không làm các nút xô lệch
+      const tag = (t) => (many ? `Bước ${si + 1} – ${t}` : t);
+      // Xong một bước tính: sang bước sau, hết bước thì viết đáp số
+      const nextStep = () => {
+        si++;
+        if (si < steps.length) { S = steps[si]; step1(); } else step3();
+      };
 
       // ---- Bước 1: câu lời giải ----
       function step1() {
@@ -38,13 +49,13 @@
             wrong++; mistakes++;
             App.Sound.play('wrong');
             b.classList.add('wrong'); b.disabled = true;
-            hint('Câu lời giải phải nói đúng điều bài toán hỏi.');
+            hint(many ? 'Câu lời giải phải nói đúng điều cần tìm ở bước này.' : 'Câu lời giải phải nói đúng điều bài toán hỏi.');
             if (wrong >= 2) setTimeout(ok1, 600);
           });
           return b;
         });
         work.innerHTML = '';
-        work.append(h('div.sv-ask', '① Chọn câu lời giải:'), h('div.opts.texts.long', btns));
+        work.append(h('div.sv-ask', tag('① Chọn câu lời giải:')), h('div.opts.texts.long', btns));
         function ok1() {
           App.Sound.play('pop');
           row.textContent = S.line + ':';
@@ -64,7 +75,7 @@
         paper.appendChild(row);
         const vals = [null, null, null];
         const numTiles = shuffle([S.a, S.b]).map((n) => tile(String(n), 'num'));
-        const opTiles = S.ops.map((o) => tile(o, 'op'));
+        const opTiles = (S.ops || S0.ops).map((o) => tile(o, 'op'));
         function tile(text, kind) {
           const t = h('button.tile.sv-tile', { type: 'button', class: kind }, text);
           t.addEventListener('click', () => {
@@ -104,7 +115,7 @@
           }, 650);
         }
         work.innerHTML = '';
-        work.append(h('div.sv-ask', '② Chạm vào các thẻ để viết phép tính:'), h('div.sv-tiles', numTiles, h('span.sv-sep'), opTiles));
+        work.append(h('div.sv-ask', tag('② Chạm vào các thẻ để viết phép tính:')), h('div.sv-tiles', numTiles, h('span.sv-sep'), opTiles));
 
         function askResult() {
           let rw = 0;
@@ -116,14 +127,14 @@
             if (k === 'del') resVal = resVal.slice(0, -1);
             else if (k === 'ok') {
               if (!resVal) return;
-              if (Number(resVal) === S.res) { res.classList.remove('active'); res.classList.add('ok'); document.removeEventListener('keydown', onKey); onKey = null; return step3(); }
+              if (Number(resVal) === S.res) { res.classList.remove('active'); res.classList.add('ok'); document.removeEventListener('keydown', onKey); onKey = null; return nextStep(); }
               rw++; mistakes++;
               App.Sound.play('wrong');
               res.classList.add('bad'); shake(res);
               hint(q.calcHint || 'Tính lại thật cẩn thận nhé.');
               setTimeout(() => {
                 res.classList.remove('bad');
-                if (rw >= 2) { resVal = String(S.res); show(); res.classList.add('fixed'); document.removeEventListener('keydown', onKey); onKey = null; step3(); }
+                if (rw >= 2) { resVal = String(S.res); show(); res.classList.add('fixed'); document.removeEventListener('keydown', onKey); onKey = null; nextStep(); }
                 else { resVal = ''; show(); }
               }, 650);
               return;
@@ -145,12 +156,13 @@
       function step3() {
         let wrong = 0;
         const unit = h('span.sv-slot.unit');
-        paper.appendChild(h('div.sv-line', 'Đáp số: ', h('b', String(S.res)), ' ', unit, '.'));
-        const btns = shuffle(S.units).map((u) => {
+        const fin = steps[steps.length - 1].res;
+        paper.appendChild(h('div.sv-line', 'Đáp số: ', h('b', String(fin)), ' ', unit, '.'));
+        const btns = shuffle(S0.units).map((u) => {
           const b = h('button.tile.text', { type: 'button' }, u);
           b.addEventListener('click', () => {
             if (b.disabled || finished) return;
-            if (u === S.ans) return ok3();
+            if (u === S0.ans) return ok3();
             wrong++; mistakes++;
             App.Sound.play('wrong');
             b.classList.add('wrong'); b.disabled = true;
@@ -160,10 +172,10 @@
           return b;
         });
         work.innerHTML = '';
-        work.append(h('div.sv-ask', '③ Chọn đơn vị cho đáp số:'), h('div.sv-tiles', btns));
+        work.append(h('div.sv-ask', (many ? '' : '③ ') + 'Chọn đơn vị cho đáp số:'), h('div.sv-tiles', btns));
         function ok3() {
           finished = true;
-          unit.textContent = S.ans;
+          unit.textContent = S0.ans;
           unit.classList.add('filled', 'ok');
           work.innerHTML = '';
           note.textContent = '';

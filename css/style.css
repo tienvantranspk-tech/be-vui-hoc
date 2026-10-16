@@ -1050,6 +1050,7 @@ b { font-weight: 700; }
 
 .tile.emoji { font-size: 2.8rem; min-width: 5rem; padding: .3rem .8rem; }
 .cz-text.chant { white-space: pre-line; line-height: 2.1; }
+.cz-text.lines { white-space: pre-line; line-height: 2.1; } /* đoạn điền từ mỗi câu một dòng */
 .cz-text.big { font-size: clamp(2.2rem, 6vmin, 3rem); }
 .tpic.mini { padding: .3rem .8rem; border-radius: 18px; align-self: center; }
 .tpic.mini .tp { font-size: clamp(2.6rem, 8vmin, 3.6rem); }

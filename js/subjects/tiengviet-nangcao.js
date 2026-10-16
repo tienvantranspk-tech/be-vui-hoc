@@ -1,11 +1,13 @@
 /* Tiếng Việt 2 – câu hỏi NÂNG CAO và THỬ THÁCH TƯ DUY.
    Từ khác loại, từ trái nghĩa – cùng nghĩa, hoàn thành tục ngữ, bộ phận câu trả lời câu hỏi (Ai? Làm gì? Thế nào? Ở đâu? Khi nào?),
    tìm từ viết sai chính tả, sắp xếp câu thành đoạn văn, giải câu đố, chọn từ tả âm thanh.
+   Dạng bài giống vở bài tập: gạch dưới từ ngữ trong đoạn văn, gạch dưới bộ phận câu, Đ/S chính tả, điền dấu câu, điền từ trái nghĩa,
+   hoàn thành tục ngữ, nhận biết mẫu câu.
    Câu đố, đoạn văn, câu mẫu đều do app tự soạn; tục ngữ là tục ngữ dân gian quen thuộc. */
 (function (App) {
   'use strict';
   const U = App.U;
-  const { pick, shuffle, sample } = U;
+  const { pick, shuffle, sample, chance } = U;
   const D = App.TVData;
   const T = {};
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -213,6 +215,224 @@
       hint: 'Đọc cả câu và tưởng tượng âm thanh, hình ảnh đó.', explain: s.replace('?', ans) };
   };
 
+  // ================= Dạng bài giống vở bài tập (nâng cao) =================
+  // Gạch dưới từ ngữ trong đoạn văn 2–3 câu, gạch dưới bộ phận câu trong câu có 4 bộ phận, Đ/S chính tả trộn nhiều cặp âm vần,
+  // điền dấu câu (. , ? !), điền từ trái nghĩa vào câu, hoàn thành hai câu tục ngữ, nhận biết mẫu câu có "bẫy".
+  // Đoạn văn, câu văn đều do app tự soạn.
+
+  // Đoạn văn có đánh dấu từ ngữ: {từ|sv} chỉ sự vật, {từ|hd} chỉ hoạt động, {từ|dd} chỉ đặc điểm (mọi từ thuộc ba nhóm đều được đánh dấu)
+  const NC_PARA = [
+    '{Đàn gà con|sv} {lông|sv} {vàng óng|dd}. {Gà mẹ|sv} {dẫn|hd} {đàn con|sv} {đi|hd} {kiếm mồi|hd} ngoài {vườn|sv}.',
+    '{Bà|sv} {trồng|hd} {cây cam|sv} ở {góc vườn|sv}. {Quả cam|sv} {chín|dd} {vàng|dd} và rất {ngọt|dd}. {Mẹ|sv} {hái|hd} {cam|sv} {biếu|hd} {hàng xóm|sv}.',
+    '{Mặt trời|sv} {mọc|hd}. {Những tia nắng|sv} {ấm áp|dd} {chiếu|hd} xuống {cánh đồng|sv}. {Bác nông dân|sv} {ra|hd} {đồng|sv} {cấy lúa|hd}.',
+    '{Dòng sông|sv} {hiền hòa|dd} {chảy|hd} qua {làng|sv}. {Mặt nước|sv} {trong xanh|dd}. {Lũ trẻ|sv} {thả|hd} {thuyền giấy|sv} trên {sông|sv}.',
+    '{Các bạn|sv} {chăm chú|dd} {nghe|hd} {cô giáo|sv} {giảng bài|hd}. {Bạn Lan|sv} {giơ tay|hd} {phát biểu|hd}. {Cô|sv} {khen|hd} {Lan|sv} rất {giỏi|dd}.',
+    '{Chú chim sâu|sv} {nhỏ xíu|dd} {nhảy|hd} trên {cành cây|sv}. {Tiếng hót|sv} của {chim|sv} {trong trẻo|dd} và {vui tai|dd}.',
+    '{Bố|sv} {sửa|hd} {chiếc xe đạp|sv} {cũ|dd}. {Bé Na|sv} {đưa|hd} {cờ lê|sv} cho {bố|sv}. {Chiếc xe|sv} lại {chạy|hd} {êm|dd} như {mới|dd}.',
+    '{Con trâu|sv} {to|dd} {khỏe|dd} {kéo|hd} {cày|sv} trên {ruộng|sv}. {Cậu bé|sv} {ngồi|hd} trên {lưng trâu|sv} {thổi sáo|hd}.',
+    '{Gió|sv} {thổi|hd} {nhè nhẹ|dd}. {Những bông hoa|sv} {đỏ thắm|dd} {đung đưa|hd} trong {vườn|sv}. {Đàn bướm|sv} {bay|hd} {rập rờn|dd}.',
+    '{Ông|sv} {đọc|hd} {báo|sv} bên {cửa sổ|sv}. {Mái tóc|sv} của {ông|sv} {bạc trắng|dd}. {Ông|sv} {cười|hd} rất {hiền|dd}.',
+    '{Cây phượng|sv} {già|dd} {đứng|hd} ở {góc sân trường|sv}. {Hoa phượng|sv} {nở|hd} {đỏ rực|dd}. {Các bạn|sv} {nhặt|hd} {cánh hoa|sv} {ép|hd} vào {vở|sv}.',
+    '{Chiếc diều|sv} {xanh|dd} {bay|hd} {cao|dd} trên {bầu trời|sv}. {Hai bạn nhỏ|sv} {reo hò|hd} {vui sướng|dd}.',
+  ];
+  const NC_CLASS = { sv: 'chỉ sự vật', hd: 'chỉ hoạt động', dd: 'chỉ đặc điểm' };
+  const NC_CLASS_HINT = {
+    sv: 'Từ chỉ sự vật là tên gọi của người, con vật, đồ vật, cây cối, cảnh vật…',
+    hd: 'Từ chỉ hoạt động cho biết người, con vật, đồ vật đang làm gì.',
+    dd: 'Từ chỉ đặc điểm cho biết màu sắc, hình dáng, tính nết… thế nào.',
+  };
+  // Tách đoạn văn thành các mục: từ được đánh dấu là một mục, chữ khác tách theo tiếng, dấu câu không chạm được
+  function paraItems(text) {
+    const out = [];
+    const re = /\{([^}|]+)\|(\w+)\}|([^\s{}]+)/g;
+    let m;
+    while ((m = re.exec(text))) {
+      if (m[1]) { out.push({ t: m[1], tag: m[2] }); continue; }
+      const mm = /^(.*?)([.,!?:;…]*)$/.exec(m[3]);
+      if (mm[1]) out.push({ t: mm[1], tag: '' });
+      if (mm[2]) out.push({ t: mm[2], punct: true });
+    }
+    return out;
+  }
+  T.ncUnderline = (...classes) => () => {
+    let text, cls, tk;
+    do {
+      text = pick(NC_PARA);
+      cls = pick(classes);
+      tk = paraItems(text);
+    } while (tk.filter((x) => x.tag === cls).length < 2);
+    const items = tk.map((x) => (x.punct ? { t: x.t, ok: null } : { t: x.t, ok: x.tag === cls }));
+    const ans = tk.filter((x) => x.tag === cls).map((x) => x.t);
+    const plainText = text.replace(/\{([^}|]+)\|\w+\}/g, '$1');
+    return { type: 'pick', mode: 'inline', items, answer: ans, skill: 'nc.tv.tuloai',
+      prompt: `Gạch dưới tất cả các từ ngữ ${NC_CLASS[cls]} trong đoạn văn.`, sub: `Đoạn văn có ${ans.length} từ ngữ ${NC_CLASS[cls]}. Chạm để gạch dưới, rồi bấm Kiểm tra.`,
+      speak: `Gạch dưới tất cả các từ ngữ ${NC_CLASS[cls]} trong đoạn văn: ${plainText}`, hint: NC_CLASS_HINT[cls],
+      explain: `Từ ngữ ${NC_CLASS[cls]}: ${ans.join(', ')}.` };
+  };
+
+  // Gạch dưới bộ phận câu trả lời cho câu hỏi Ai? Làm gì? Ở đâu? Khi nào? Thế nào? (bé chạm từng tiếng)
+  // level 2: hỏi Ai?, Làm gì? · level 3: thêm Thế nào? · level 4: thêm Ở đâu?, Khi nào?
+  T.ncPartPick = (level) => () => {
+    const words = (s, ok) => s.split(' ').map((t) => ({ t, ok }));
+    if (level >= 3 && chance(0.3)) {
+      const [s, a] = pick(FEAT), askSubj = chance(0.5), q = askSubj ? Q.ai : Q.thenao;
+      const items = [...words(s, askSubj), ...words(a, !askSubj), { t: '.', ok: null }];
+      const part = askSubj ? s : a;
+      return { type: 'pick', mode: 'inline', items, answer: [part], skill: 'nc.tv.cauhoi',
+        prompt: `Gạch dưới bộ phận câu trả lời cho câu hỏi “${q}”`, sub: 'Chạm vào từng tiếng của bộ phận đó, rồi bấm Kiểm tra.',
+        speak: `Gạch dưới bộ phận câu trả lời cho câu hỏi ${q.replace('?', '')}. Câu: ${s} ${a}.`,
+        hint: askSubj ? 'Hỏi: “Cái gì (con gì, ai) thế nào?” – phần trả lời đứng đầu câu.' : `Hỏi: “${s} thế nào?” – phần trả lời đứng sau.`,
+        explain: `${q} → ${part}` };
+    }
+    const [t, s, v, w] = pick(ACT);
+    const asks = [[s, Q.ai], [v, Q.lamgi]];
+    if (level >= 4) asks.push([w, Q.odau], [cap(t), Q.khinao]);
+    const [part, q] = pick(asks);
+    const items = [...words(cap(t), part === cap(t)), { t: ',', ok: null }, ...words(s, part === s), ...words(v, part === v), ...words(w, part === w), { t: '.', ok: null }];
+    return { type: 'pick', mode: 'inline', items, answer: [part], skill: 'nc.tv.cauhoi',
+      prompt: `Gạch dưới bộ phận câu trả lời cho câu hỏi “${q}”`, sub: 'Chạm vào từng tiếng của bộ phận đó, rồi bấm Kiểm tra.',
+      speak: `Gạch dưới bộ phận câu trả lời cho câu hỏi ${q.replace('?', '')}. Câu: ${cap(t)}, ${s} ${v} ${w}.`,
+      hint: 'Thử đặt câu hỏi rồi tìm phần trả lời: Ai? (người, con vật) – Làm gì? (hoạt động) – Ở đâu? (nơi chốn) – Khi nào? (thời gian).',
+      explain: `${q} → ${part}` };
+  };
+
+  // Đ/S chính tả: mỗi dòng một cặp âm vần khác nhau (bỏ hình để bé phải đọc kĩ)
+  function spellPool(ids) {
+    return ids.flatMap((id) => {
+      const r = D.spell[id];
+      return r.items.map((it) => ({ id, right: it[0].replace('?', it[1]),
+        wrongs: (r.pair ? r.pair.filter((x) => x !== it[1]) : [].concat(it[2])).map((w) => it[0].replace('?', w)) }));
+    });
+  }
+  T.ncSpellRows = (...ids) => () => {
+    const pool = spellPool(ids), rights = new Set(pool.map((x) => x.right));
+    for (let t = 0; t < 40; t++) {
+      const rules = sample(U.uniq(pool.map((x) => x.id)), Math.min(5, U.uniq(pool.map((x) => x.id)).length));
+      const picks = rules.map((id) => pick(pool.filter((x) => x.id === id)));
+      if (picks.length < 4) { while (picks.length < 4) { const x = pick(pool); if (!picks.includes(x)) picks.push(x); } }
+      const wrong = new Set(sample(U.range(0, picks.length - 1), U.rand(2, 3)));
+      const rows = picks.map((x, i) => {
+        const w = wrong.has(i) ? pick(x.wrongs.filter((y) => !rights.has(y))) : null;
+        return { t: w || x.right, a: w ? 'S' : 'Đ', right: x.right };
+      });
+      if (new Set(rows.map((r) => r.a)).size < 2 || new Set(rows.map((r) => r.t)).size < rows.length) continue;
+      return { type: 'rows', items: rows.map(({ t: tt, a }) => ({ t: tt, a })), answer: rows.map((r) => r.a), skill: 'nc.tv.chinhta',
+        prompt: 'Đ, S?', sub: 'Từ ngữ viết đúng chính tả chọn Đ, viết sai chọn S. Các dòng thuộc nhiều quy tắc chính tả khác nhau!',
+        hint: 'Đọc chậm từng tiếng. Nhớ: k, gh, ngh đứng trước i, e, ê; phân biệt ch/tr, s/x, l/n, r/d/gi, dấu hỏi/dấu ngã…',
+        explain: rows.map((r) => (r.a === 'Đ' ? `${r.t} → Đ` : `${r.t} → S (viết đúng: ${r.right})`)).join('\n') };
+    }
+    return T.misspell(...ids)();
+  };
+
+  // Điền dấu câu vào đoạn văn: [.] [,] [?] [!] là chỗ trống. Dấu phẩy chỉ dùng để ngăn cách các từ ngữ cùng loại.
+  const NC_PUNCT4 = [
+    'Chao ôi, vườn hoa đẹp quá[!] Trong vườn có hoa hồng[,] hoa cúc[,] hoa lan và hoa huệ[.] Bạn thích loài hoa nào nhất[?]',
+    'Hôm nay là sinh nhật Lan[.] Lan được tặng búp bê[,] gấu bông[,] hộp màu và một quyển truyện[.] Ôi, quà nhiều quá[!] Ai đã tặng Lan quyển truyện[?]',
+    'Mẹ hỏi: “Con muốn mang gì đi dã ngoại[?]” Em đáp: “Con mang bánh mì[,] sữa[,] nước cam và quả táo ạ[.]” Mẹ khen: “Con chuẩn bị giỏi quá[!]”',
+    'Nhà bác Ba nuôi gà[,] vịt[,] ngan và ngỗng[.] Sáng nào gà trống cũng gáy vang[.] A, đàn vịt con xinh quá[!] Đàn vịt có bao nhiêu con nhỉ[?]',
+    'Hoan hô đội bóng lớp 2A[!] Các bạn Minh[,] Hùng[,] Tú và Việt đã chơi rất hay[.] Bạn nào ghi bàn thắng đầu tiên[?] Đó là bạn Minh[.]',
+    'Thư viện trường em có truyện cổ tích[,] truyện tranh[,] sách khoa học và báo thiếu nhi[.] Em hỏi cô: “Em mượn quyển sách này được không ạ[?]” Ôi, em vui quá[!]',
+    'Mâm ngũ quả ngày Tết có chuối[,] bưởi[,] cam và quýt[.] Em hỏi mẹ: “Vì sao Tết lại bày mâm ngũ quả hả mẹ[?]” A, thì ra là vậy[!]',
+    'Ôi, biển xanh quá[!] Trên bãi cát có còng[,] ốc[,] sao biển và vỏ sò[.] Bố ơi, sao biển có mấy cánh[?] Sao biển có năm cánh con ạ[.]',
+    'Đồ dùng học tập của em gồm bút chì[,] thước kẻ[,] tẩy và bảng con[.] Bạn Hà hỏi em: “Cậu có bút màu đỏ không[?]” Em cho Hà mượn bút[.] Hà nói: “Cậu tốt quá[!]”',
+    'Sở thú có voi[,] hổ[,] hươu cao cổ và khỉ[.] Chú khỉ đu cành rất giỏi[.] Ôi, chú khỉ nghịch quá[!] Con voi nặng bao nhiêu ki-lô-gam nhỉ[?]',
+  ];
+  const NC_PUNCT3 = [
+    'Ôi, chiếc cặp mới đẹp quá[!] Ai mua cho em chiếc cặp này[?] Mẹ mua cho em đấy[.]',
+    'Bạn Minh hỏi: “Nhà cậu có nuôi con gì không[?]” Lan đáp: “Nhà tớ nuôi một chú mèo[.]” Minh reo lên: “Thích quá[!]”',
+    'Trời mưa to quá[!] Bố có mang áo mưa không[?] Bố đã mang áo mưa rồi[.]',
+    'Hoan hô, đội em thắng rồi[!] Ai đã ghi bàn[?] Bạn Hùng ghi bàn đấy[.] Cả đội ôm nhau vui mừng[.]',
+    'Ồ, cây xoài sai quả quá[!] Ai trồng cây xoài này[?] Ông nội trồng cây xoài từ ngày bố còn nhỏ[.]',
+    'Chao ôi, ông trăng tròn quá[!] Ông trăng ở xa hay ở gần hả bố[?] Ông trăng ở rất xa con ạ[.]',
+  ];
+  T.ncPunct = (n) => () => {
+    const text = pick(n === 4 ? NC_PUNCT4 : NC_PUNCT3);
+    // ô dấu câu dính liền với chữ đứng trước (không bị rơi xuống đầu dòng)
+    const parts = [];
+    let last = 0, m;
+    const re = /\[([.,?!])\]/g;
+    while ((m = re.exec(text))) {
+      const before = text.slice(last, m.index), mm = /^([\s\S]*?)(\S*)$/.exec(before);
+      if (mm[1]) parts.push(mm[1]);
+      parts.push([mm[2], { a: m[1] }]);
+      last = re.lastIndex;
+    }
+    if (last < text.length) parts.push(text.slice(last));
+    const q = { type: 'cloze', parts, bank: n === 4 ? ['.', ',', '?', '!'] : ['.', '?', '!'], reuse: true, blank: 'punct', skill: 'nc.tv.dau',
+      prompt: n === 4 ? 'Điền dấu chấm, dấu phẩy, dấu chấm hỏi hay dấu chấm than vào mỗi ô trống?' : 'Điền dấu chấm, dấu chấm hỏi hay dấu chấm than vào mỗi ô trống?',
+      sub: 'Chạm vào ô trống, rồi chạm vào dấu câu.', speak: 'Chọn dấu câu thích hợp cho mỗi ô trống trong đoạn văn.',
+      hint: 'Câu kể: dấu chấm. Câu hỏi (ai, gì, nào, không, chưa, mấy…): dấu chấm hỏi. Câu khen, reo vui (ôi, quá…): dấu chấm than.'
+        + (n === 4 ? ' Ngăn cách các từ ngữ cùng loại: dấu phẩy.' : ''),
+      explain: 'Viết đúng: ' + text.replace(/\[([.,?!])\]/g, '$1') };
+    q.answer = App.QTypes.cloze.collect(parts);
+    return q;
+  };
+
+  // Điền từ trái nghĩa vào câu: [đầu câu, từ cần điền, cuối câu, nhóm nghĩa]. Mỗi bài lấy các câu thuộc nhóm nghĩa khác nhau
+  // (và thẻ nhiễu cũng khác nhóm) để mỗi chỗ trống chỉ có một cách điền.
+  const NC_ANTO = [
+    ['Con voi thì to, con kiến thì ', 'nhỏ', '.', 'co'], ['Cây cau thì cao, cây ớt thì ', 'thấp', '.', 'co'], ['Mùa hè trời nóng, mùa đông trời ', 'lạnh', '.', 'troi'],
+    ['Thỏ chạy nhanh, rùa bò ', 'chậm', '.', 'toc'], ['Ban ngày trời sáng, ban đêm trời ', 'tối', '.', 'troi'], ['Chiếc áo mới giặt thì sạch, chiếc áo dính bùn thì ', 'bẩn', '.', 'sach'],
+    ['Nhà bạn Lan ở gần trường, nhà bạn Nam ở ', 'xa', ' trường.', 'xa'], ['Bông thì nhẹ, đá thì ', 'nặng', '.', 'nang'], ['Đá thì cứng, bông thì ', 'mềm', '.', 'cung'],
+    ['Đường làng thì hẹp, đường phố thì ', 'rộng', '.', 'co'], ['Giờ ra chơi sân trường ồn ào, giờ học sân trường ', 'yên tĩnh', '.', 'on'],
+    ['Được điểm mười, em rất vui. Làm mất bút, em rất ', 'buồn', '.', 'vui'], ['Sợi dây này dài, sợi dây kia ', 'ngắn', '.', 'co'], ['Viên kẹo thì ngọt, viên thuốc thì ', 'đắng', '.', 'vi'],
+  ];
+  T.ncAntonymCloze = () => () => {
+    let pk;
+    do { pk = sample(NC_ANTO, 3); } while (new Set(pk.map((x) => x[3])).size < 3);
+    const fields = new Set(pk.map((x) => x[3]));
+    const extra = sample(NC_ANTO.filter((x) => !fields.has(x[3])).map((x) => x[1]), 2);
+    const parts = [];
+    pk.forEach(([pre, a, post], i) => { if (i) parts.push('\n'); parts.push(pre, { a }, post); });
+    const ans = pk.map((x) => x[1]);
+    return { type: 'cloze', parts, bank: shuffle([...ans, ...extra]), answer: ans, textClass: 'lines', skill: 'nc.tv.trainghia',
+      prompt: 'Điền từ có nghĩa trái ngược vào chỗ trống.', sub: 'Chạm vào chỗ trống, rồi chạm vào từ ngữ. Có thẻ không dùng đến.',
+      speak: 'Điền từ có nghĩa trái ngược vào chỗ trống trong mỗi câu.', hint: 'Mỗi câu so sánh hai sự vật trái ngược nhau. Ví dụ: to – nhỏ, nóng – lạnh.',
+      explain: pk.map(([pre, a, post]) => pre + a + post).join('\n') };
+  };
+
+  // Hoàn thành hai câu tục ngữ
+  T.ncProverbCloze = (...groups) => () => {
+    const pool = PROVERBS.filter((p) => !groups.length || groups.includes(p[4]));
+    let two;
+    do { two = sample(pool, 2); } while (two[0][1] === two[1][1]);
+    const ans = two.map((p) => p[1]);
+    const extra = sample(U.uniq(two.flatMap((p) => p[2])).filter((w) => !ans.includes(w)), 2);
+    const parts = [];
+    two.forEach(([s, a], i) => { if (i) parts.push('\n'); const [pre, post] = s.split('?'); parts.push('• ' + pre, { a }, post + '.'); });
+    return { type: 'cloze', parts, bank: shuffle([...ans, ...extra]), answer: ans, textClass: 'lines', skill: 'nc.tv.tucngu',
+      prompt: 'Chọn từ ngữ thích hợp để hoàn thành hai câu tục ngữ.', sub: 'Chạm vào chỗ trống, rồi chạm vào từ. Có thẻ không dùng đến.',
+      speak: 'Chọn từ thích hợp để hoàn thành hai câu tục ngữ: ' + two.map((p) => p[0].replace('?', '…')).join('. '),
+      hint: 'Đọc cả câu, nhớ lại câu tục ngữ mà ông bà, thầy cô hay nói.',
+      explain: two.map(([s, a, , mean]) => `${s.replace('?', a)}. (${mean})`).join('\n') };
+  };
+
+  // Mẫu câu: có "bẫy" (câu giới thiệu có từ chỉ hoạt động, câu nêu hoạt động có từ chỉ đặc điểm…)
+  const NC_SENT = {
+    gt: ['Bạn Hùng là người chạy nhanh nhất lớp em.', 'Ông nội là người kể chuyện hay nhất nhà em.', 'Hoa mai là loài hoa của ngày Tết.',
+      'Chú mèo mướp là bạn thân của bé Na.', 'Bác Tư là người lái xe buýt của tuyến phố này.', 'Thư viện là nơi các bạn đọc sách mỗi giờ ra chơi.'],
+    hd: ['Bạn Lan chăm chỉ tưới cây mỗi sáng.', 'Bé Na vui vẻ chào cô giáo.', 'Đàn chim sẻ ríu rít gọi nhau trên cành.', 'Chú bộ đội đứng gác bên cột mốc.',
+      'Mẹ cẩn thận gấp từng chiếc áo.', 'Các bạn nhỏ đang thả diều trên đê.'],
+    dd: ['Chú mèo nhà em rất lười.', 'Mái tóc của bà bạc trắng như cước.', 'Cánh đồng lúa chín vàng óng ả.', 'Bạn Minh rất chăm chỉ và tốt bụng.',
+      'Dòng sông quê em hiền hòa và trong xanh.', 'Con đường đến trường dài và rợp bóng cây.'],
+  };
+  const NC_TYPE = { gt: 'Ai là gì?', hd: 'Ai làm gì?', dd: 'Ai thế nào?' };
+  T.ncSentRows = () => () => {
+    let ts;
+    do { ts = [0, 1, 2, 3].map(() => pick(['gt', 'hd', 'dd'])); } while (new Set(ts).size < 3);
+    const used = new Set();
+    const items = ts.map((ty) => {
+      let s;
+      do { s = pick(NC_SENT[ty]); } while (used.has(s));
+      used.add(s);
+      return { t: s, a: NC_TYPE[ty] };
+    });
+    return { type: 'rows', opts: ['Ai là gì?', 'Ai làm gì?', 'Ai thế nào?'], items, answer: items.map((x) => x.a), skill: 'nc.tv.maucau',
+      prompt: 'Mỗi câu dưới đây được viết theo mẫu nào?', sub: 'Cẩn thận: có câu chứa từ chỉ hoạt động nhưng lại là câu giới thiệu!',
+      hint: 'Tìm bộ phận đứng sau “Ai”: bắt đầu bằng “là” → Ai là gì?; chỉ việc làm → Ai làm gì?; chỉ đặc điểm, tính nết → Ai thế nào?',
+      explain: items.map((x) => `${x.t} → ${x.a}`).join('\n') };
+  };
+
   App.Gen.tvAdv = T;
 
   // ================= Gắn vào các chủ điểm =================
@@ -222,18 +442,26 @@
   const SP1 = ['c_k', 'ch_tr', 'v_d'], SP2 = [...SP1, 'g_gh', 's_x', 'hoi_nga'], SP3 = [...SP2, 'ng_ngh', 'r_d_gi', 'an_ang'], SP4 = [...SP3, 'l_n', 'ao_au', 'uon_uong'];
   const late = (from) => [[T.oddClass('suvat', 'hoatdong', 'dacdiem'), from], [T.antonym(), from], [T.synonym(), from], [T.misspell(...SP4), from],
     [T.paragraph(), from], [T.riddle(), from], [T.sound(), from], [T.questionPart(4), from], [T.oddTopic(...OT), from]];
+  // Dạng bài giống vở bài tập: gạch dưới, Đ/S, điền dấu câu, điền từ (dấu phẩy học ở chủ điểm 6 nên từ đó mới điền đủ 4 dấu)
+  const lateNew = (from, punct = 4, punctFrom = from) => [[T.ncUnderline('sv', 'hd', 'dd'), from], [T.ncPartPick(4), from], [T.ncSpellRows(...SP4), from],
+    [T.ncSentRows(), from], [T.ncAntonymCloze(), from], [T.ncPunct(punct), punctFrom]];
   App.attachAdvanced(App.Curriculum.tv, {
     t1: [[T.oddClass('suvat', 'hoatdong'), 'b1'], [T.questionPart(1), 'b1'], [T.riddle(), 'b1'], [T.questionPart(2), 'b3'],
-      [T.oddClass('suvat', 'hoatdong', 'dacdiem'), 'b5'], [T.questionPart(3), 'b5'], [T.antonym(), 'b5']],
+      [T.oddClass('suvat', 'hoatdong', 'dacdiem'), 'b5'], [T.questionPart(3), 'b5'], [T.antonym(), 'b5'],
+      [T.ncUnderline('sv', 'hd'), 'b2'], [T.ncPartPick(2), 'b4'], [T.ncAntonymCloze(), 'b5'], [T.ncUnderline('sv', 'hd', 'dd'), 'b6'], [T.ncSentRows(), 'b8']],
     t2: [[T.misspell(...SP1), 'b9'], [T.proverb('truong'), 'b9'], [T.oddTopic(['dodung', 'dochoi'], ['trochoi', 'dodung']), 'b9'],
-      [T.misspell(...SP2), 'b11'], [T.misspell(...SP3), 'b13'], [T.sound(), 'b13'], [T.misspell(...SP4), 'b15']],
-    t3: [[T.paragraph(), 'b17'], [T.synonym(), 'b17'], [T.proverb('ban'), 'b17'], [T.oddTopic(...OT.slice(0, 3)), 'b17'], [T.misspell(...SP4), 'b17']],
-    t4: [[T.proverb('nha'), 'b25'], [T.paragraph(), 'b25'], [T.antonym(), 'b25'], [T.synonym(), 'b27'], [T.misspell(...SP4), 'b25']],
-    t5: [...late('c1'), [T.proverb('chamchi'), 'c1']],
-    t6: [...late('c9'), [T.proverb('chamchi', 'on'), 'c9']],
-    t7: [...late('c17'), [T.proverb('ban', 'on'), 'c17']],
-    t8: [...late('c21'), [T.proverb('on', 'nha'), 'c21']],
-    t9: [...late('c25'), [T.proverb(), 'c25']],
+      [T.misspell(...SP2), 'b11'], [T.misspell(...SP3), 'b13'], [T.sound(), 'b13'], [T.misspell(...SP4), 'b15'],
+      [T.ncSpellRows(...SP1), 'b9'], [T.ncUnderline('sv', 'hd', 'dd'), 'b9'], [T.ncProverbCloze('truong'), 'b9'], [T.ncSpellRows(...SP2), 'b11'],
+      [T.ncPartPick(3), 'b12'], [T.ncSpellRows(...SP3), 'b13']],
+    t3: [[T.paragraph(), 'b17'], [T.synonym(), 'b17'], [T.proverb('ban'), 'b17'], [T.oddTopic(...OT.slice(0, 3)), 'b17'], [T.misspell(...SP4), 'b17'],
+      [T.ncUnderline('sv', 'hd', 'dd'), 'b17'], [T.ncSpellRows(...SP4), 'b17'], [T.ncSentRows(), 'b17'], [T.ncProverbCloze('ban', 'truong'), 'b17'], [T.ncPunct(3), 'b18']],
+    t4: [[T.proverb('nha'), 'b25'], [T.paragraph(), 'b25'], [T.antonym(), 'b25'], [T.synonym(), 'b27'], [T.misspell(...SP4), 'b25'],
+      [T.ncPartPick(3), 'b25'], [T.ncPunct(3), 'b25'], [T.ncAntonymCloze(), 'b25'], [T.ncSpellRows(...SP4), 'b25'], [T.ncProverbCloze('nha', 'ban'), 'b25']],
+    t5: [...late('c1'), [T.proverb('chamchi'), 'c1'], ...lateNew('c1', 3), [T.ncProverbCloze('chamchi', 'on'), 'c1']],
+    t6: [...late('c9'), [T.proverb('chamchi', 'on'), 'c9'], ...lateNew('c9', 4, 'c14'), [T.ncProverbCloze('chamchi', 'on'), 'c9']],
+    t7: [...late('c17'), [T.proverb('ban', 'on'), 'c17'], ...lateNew('c17'), [T.ncProverbCloze('ban', 'on'), 'c17']],
+    t8: [...late('c21'), [T.proverb('on', 'nha'), 'c21'], ...lateNew('c21'), [T.ncProverbCloze('on', 'nha'), 'c21']],
+    t9: [...late('c25'), [T.proverb(), 'c25'], ...lateNew('c25'), [T.ncProverbCloze(), 'c25']],
   });
 
   App.SkillNames = Object.assign(App.SkillNames || {}, {
@@ -242,5 +470,7 @@
     'nc.tv.caudo': 'Tiếng Việt nâng cao: Giải câu đố', 'nc.tv.cauhoi': 'Tiếng Việt nâng cao: Bộ phận câu (Ai? Làm gì? Thế nào?…)',
     'nc.tv.chinhta': 'Tiếng Việt nâng cao: Tìm từ viết sai chính tả', 'nc.tv.doanvan': 'Tiếng Việt nâng cao: Sắp xếp đoạn văn',
     'nc.tv.tuongthanh': 'Tiếng Việt nâng cao: Từ tả âm thanh, hình ảnh',
+    'nc.tv.tuloai': 'Tiếng Việt nâng cao: Gạch dưới từ ngữ trong đoạn văn', 'nc.tv.dau': 'Tiếng Việt nâng cao: Điền dấu câu (. , ? !)',
+    'nc.tv.maucau': 'Tiếng Việt nâng cao: Nhận biết mẫu câu (Ai là gì? Ai làm gì? Ai thế nào?)',
   });
 })(window.App);

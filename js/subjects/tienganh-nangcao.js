@@ -1,6 +1,7 @@
 /* Tiếng Anh 2 – câu hỏi NÂNG CAO và THỬ THÁCH (gần với dạng bài thi tiếng Anh dành cho lớp 2):
    tìm từ khác loại, chọn từ viết đúng chính tả, ngữ pháp (is/are, a/an, can/do…), nghe câu rồi chọn câu đúng (không có hình),
-   đọc câu rồi chọn hình có hai đồ vật, làm tính bằng tiếng Anh. */
+   đọc câu rồi chọn hình có hai đồ vật, làm tính bằng tiếng Anh;
+   dạng giống sách: Find and circle bảng 7 × 7, Read and tick câu của nhiều Unit, điền từ vào ba câu, khoanh các từ cùng nhóm. */
 (function (App) {
   'use strict';
   const U = App.U;
@@ -157,6 +158,123 @@
     return () => Object.assign(g(), { skill: 'nc.ta.hoidap' });
   };
 
+  // ================= Dạng bài giống sách (nâng cao) =================
+  // Unit của chủ đề đang học (4 Unit một chủ đề): ưu tiên từ, câu của các Unit này
+  const topicUnits = (n) => U.range(4 * Math.ceil(n / 4) - 3, n);
+
+  // Find and circle: tìm 4 từ trong bảng chữ 7 × 7 (mỗi từ chỉ xuất hiện đúng một lần trong bảng)
+  const AZ = 'abcdefghijklmnopqrstuvwxyz';
+  const countIn = (grid, w) => {
+    let k = 0;
+    const N = grid.length;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (c + w.length <= N && grid[r].slice(c, c + w.length) === w) k++;
+      if (r + w.length <= N && U.range(0, w.length - 1).map((i) => grid[r + i][c]).join('') === w) k++;
+    }
+    return k;
+  };
+  X.findWords7 = (n) => () => {
+    const ok = (w) => /^[a-z]+$/.test(w) && w.length >= 3 && w.length <= 7;
+    const near = learned(n).filter((w) => ok(w) && topicUnits(n).includes(W[w].u)), all = learned(n).filter(ok);
+    const N = 7;
+    for (let tries = 0; tries < 80; tries++) {
+      // ít nhất 2 từ của chủ đề đang học; không lấy từ nằm trong từ khác (kite – kitten)
+      const words = U.uniq([...sample(near, Math.min(near.length, 2)), ...sample(all, 4)]).slice(0, 4);
+      if (words.length < 4 || words.some((a) => words.some((b) => a !== b && b.includes(a)))) continue;
+      const g = Array.from({ length: N }, () => Array(N).fill(''));
+      const place = [];
+      let good = true;
+      for (const w of words.slice().sort((a, b) => b.length - a.length)) {
+        let put = false;
+        for (let t = 0; t < 80 && !put; t++) {
+          const d = U.chance(0.5) ? 'h' : 'v';
+          const r = rand(0, d === 'v' ? N - w.length : N - 1), c = rand(0, d === 'h' ? N - w.length : N - 1);
+          const cells = w.split('').map((ch, k) => [d === 'v' ? r + k : r, d === 'h' ? c + k : c, ch]);
+          if (cells.every(([rr, cc, ch]) => !g[rr][cc] || g[rr][cc] === ch)) {
+            cells.forEach(([rr, cc, ch]) => { g[rr][cc] = ch; });
+            place.push({ w, r, c, d });
+            put = true;
+          }
+        }
+        if (!put) { good = false; break; }
+      }
+      if (!good) continue;
+      for (let fillTry = 0; fillTry < 20; fillTry++) {
+        const grid = g.map((row) => row.map((ch) => ch || AZ[rand(0, 25)]).join(''));
+        if (words.some((w) => countIn(grid, w) !== 1)) continue;
+        const pics = {};
+        words.forEach((w) => { pics[w] = E.wpic(w); });
+        const p = 'Find and circle: tìm 4 từ trong bảng chữ.';
+        return { type: 'wordsearch', grid, place, pics, answer: words, skill: 'nc.ta.timtu', prompt: p,
+          sub: 'Bảng to hơn, nhiều từ hơn! Chạm chữ cái đầu, rồi chạm chữ cái cuối của mỗi từ (hàng ngang hoặc cột dọc).',
+          speak: [['Tìm 4 từ trong bảng chữ:', 'vi'], ...words.map((w) => [w, 'en'])], note: `${p} ${words.join(', ')}`,
+          explain: words.map((w) => `${w} = ${W[w].vi}`).join('\n') };
+      }
+    }
+    return X.spellPick(...D.units[n].words)();
+  };
+
+  // Read and tick: câu của nhiều Unit; câu sai chỉ khác câu đúng một từ (cùng mẫu câu) nên phải đọc kĩ
+  X.tickMany = (n) => () => {
+    const ids = Object.keys(D.tpl).filter((id) => D.tpl[id].u <= n && E.variants(id).length >= 2);
+    for (let t = 0; t < 40; t++) {
+      const cur = ids.filter((id) => topicUnits(n).includes(D.tpl[id].u));
+      const chosen = U.uniq([pick(cur.length ? cur : ids), ...sample(ids, 4)]).slice(0, 4);
+      if (new Set(chosen.map((id) => D.tpl[id].u)).size < 2) continue;
+      const rows = chosen.map((id) => {
+        const vs = E.variants(id), v = pick(vs), right = U.chance(0.5);
+        const s = right ? v.en : pick(vs.filter((x) => x.en !== v.en)).en;
+        return { v, s, a: s === v.en ? '✓' : '✗' };
+      });
+      if (new Set(rows.map((x) => x.a)).size < 2) continue;
+      const p = 'Read and tick: câu đúng với hình chọn ✓, sai chọn ✗.';
+      return { type: 'rows', opts: ['✓', '✗'], skill: 'nc.ta.doctick',
+        items: rows.map((x) => ({ html: `<div class="rw-pic"><div class="tpic mini">${E.pic(x.v.pic)}</div><div class="rw-cap en">${x.s}</div></div>`, a: x.a })),
+        answer: rows.map((x) => x.a), prompt: p, sub: 'Câu sai chỉ khác câu đúng một vài chữ. Đọc thật kĩ nhé!',
+        speak: [['Câu đúng với hình chọn đúng, sai chọn sai.', 'vi']], note: p, hint: 'Đọc từng từ trong câu, nhìn kĩ hình: đúng đồ vật, đúng người, đúng chỗ chưa?',
+        explain: rows.map((x) => `${x.v.en} (${x.v.vi})`).join('\n') };
+    }
+    return E.readTick(...ids)();
+  };
+
+  // Điền từ vào 3 câu (mỗi câu một chỗ trống, thẻ có cả từ gây nhiễu)
+  X.grammarCloze = (n) => () => {
+    const pool = GRAM.filter((g) => g.u <= n);
+    for (let t = 0; t < 60; t++) {
+      const cur = pool.filter((g) => topicUnits(n).includes(g.u));
+      const three = U.uniq([pick(cur.length ? cur : pool), ...sample(pool, 3)]).slice(0, 3);
+      const ans = three.map((g) => g.a);
+      if (three.length < 3 || new Set(ans.map((a) => a.toLowerCase())).size < 3) continue;
+      if (n >= 3 && new Set(three.map((g) => g.u)).size < 3) continue; // ba câu của ba Unit khác nhau
+      const extra = sample(U.uniq(three.flatMap((g) => g.w)).filter((w) => !ans.some((a) => a.toLowerCase() === w.toLowerCase())), 2);
+      const parts = [];
+      three.forEach((g, i) => { if (i) parts.push('\n'); const [pre, post] = g.s.split('___'); parts.push(pre, { a: g.a }, post); });
+      const full = three.map((g) => g.s.replace('___', g.a));
+      const p = 'Chọn từ đúng điền vào chỗ trống trong mỗi câu:';
+      return { type: 'cloze', parts, bank: shuffle([...ans, ...extra]), answer: ans, textClass: 'chant en', skill: 'nc.ta.nguphap',
+        prompt: p, sub: 'Chạm vào chỗ trống, rồi chạm vào từ. Có thẻ không dùng đến.', speak: say(p), note: `Điền từ: ${three.map((g) => g.s).join(' / ')}`,
+        hint: 'Đọc cả câu (và câu trả lời đi kèm): is – một người/vật, are – nhiều; a đứng trước phụ âm, an đứng trước nguyên âm…',
+        explain: full.join('\n'), sayExplain: [[full.join(' '), 'en']] };
+    }
+    return X.grammar(n)();
+  };
+
+  // Khoanh vào các từ cùng một nhóm (đồ ăn, con vật, nơi chốn…)
+  X.groupPick = (n) => () => {
+    const ok = learned(n);
+    const avail = Object.keys(CAT).map((c) => [c, CAT[c].ws.filter((w) => ok.includes(w))]);
+    const [c1, ws1] = pick(avail.filter(([, ws]) => ws.length >= 3));
+    const good = sample(ws1, Math.min(ws1.length, rand(3, 4)));
+    const bad = sample(avail.filter(([c]) => c !== c1).flatMap(([, ws]) => ws), 8 - good.length);
+    if (bad.length < 3) return X.oddOne(n)();
+    const items = shuffle([...good.map((t) => ({ t, ok: true })), ...bad.map((t) => ({ t, ok: false }))]);
+    const p = `Khoanh vào tất cả các từ chỉ ${CAT[c1].vi}.`;
+    return { type: 'pick', mode: 'tiles', items, answer: good, skill: 'nc.ta.nhomtu', prompt: p,
+      sub: 'Chạm để chọn (có thể chọn nhiều), rồi bấm Kiểm tra. Chạm loa để nghe đề.', speak: [[p, 'vi'], ...items.map((x) => [x.t, 'en'])],
+      note: `${p} ${items.map((x) => x.t).join(', ')}`, hint: 'Nhớ nghĩa của từng từ, rồi xem từ đó có thuộc nhóm này không.',
+      explain: `Từ chỉ ${CAT[c1].vi}: ${good.map((w) => `${w} (${W[w].vi})`).join(', ')}.` };
+  };
+
   // ================= Gắn vào các Unit =================
   const pools = {};
   for (let n = 1; n <= 16; n++) {
@@ -170,6 +288,9 @@
     if (tpls.length) p.push([X.listenText(...tpls), `u${n}b`]);
     if (n >= 5) p.push([X.answerMany(n), `u${n}b`]);
     if (n >= 13) p.push([X.mathWords(n), `u${n}b`]);
+    // Dạng bài giống sách: Find and circle 7 × 7, Read and tick nhiều Unit, điền từ vào câu, khoanh từ theo nhóm
+    if (n >= 3) p.push([X.groupPick(n), `u${n}a`]);
+    if (n >= 2) p.push([X.findWords7(n), `u${n}m`], [X.tickMany(n), `u${n}b`], [X.grammarCloze(n), `u${n}b`]);
   }
   App.attachAdvanced(App.Curriculum.ta, pools);
 
@@ -178,5 +299,7 @@
     'nc.ta.nguphap': 'Tiếng Anh nâng cao: Ngữ pháp', 'nc.ta.nghecau': 'Tiếng Anh nâng cao: Nghe câu (không có hình)',
     'nc.ta.doc': 'Tiếng Anh nâng cao: Đọc câu, chọn hình', 'nc.ta.tinh': 'Tiếng Anh nâng cao: Làm tính bằng tiếng Anh',
     'nc.ta.hoidap': 'Tiếng Anh nâng cao: Hỏi – đáp nhiều Unit',
+    'nc.ta.timtu': 'Tiếng Anh nâng cao: Tìm 4 từ trong bảng chữ 7 × 7', 'nc.ta.doctick': 'Tiếng Anh nâng cao: Read and tick (câu của nhiều Unit)',
+    'nc.ta.nhomtu': 'Tiếng Anh nâng cao: Khoanh các từ cùng nhóm',
   });
 })(window.App);

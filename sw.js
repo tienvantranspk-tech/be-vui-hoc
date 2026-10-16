@@ -1,6 +1,6 @@
 /* Bộ nhớ đệm của app (PWA): cất sẵn toàn bộ app trong máy để mở nhanh và chơi được khi không có mạng.
    MỖI LẦN SỬA APP: tăng VERSION (ví dụ ...-2) để máy tính bảng tự tải bản mới ở lần mở sau. */
-const VERSION = 'bvh-2026-10-15-3';
+const VERSION = 'bvh-2026-10-15-6';
 const FONTS = 'bvh-fonts';
 
 // Các tệp của app (thêm tệp mới vào index.html thì nhớ thêm vào đây)

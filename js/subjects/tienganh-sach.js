@@ -142,13 +142,29 @@
       hint: 'Đọc từng câu, nhìn kĩ hình bên trên.', explain: items.map((x) => `${x.v.en} (${x.v.vi})`).join('\n') };
   };
 
-  // ================= Find and circle: tìm từ trong bảng chữ =================
+  // ================= Find and circle: tìm từ trong bảng chữ (mỗi từ chỉ xuất hiện đúng một lần) =================
   const AZ = 'abcdefghijklmnopqrstuvwxyz';
-  E.findWords = (...ws) => () => {
-    const cand = U.uniq(ws).filter((w) => /^[a-z]+$/.test(w) && w.length <= 6 && w.length >= 2);
-    const N = 6;
+  // Số lần từ w xuất hiện trong bảng (hàng ngang + cột dọc)
+  const countIn = (grid, w) => {
+    let k = 0;
+    const N = grid.length;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (c + w.length <= N && grid[r].slice(c, c + w.length) === w) k++;
+      if (r + w.length <= N && U.range(0, w.length - 1).map((i) => grid[r + i][c]).join('') === w) k++;
+    }
+    return k;
+  };
+  // ws: từ của bài · more: từ ôn thêm khi ws chưa đủ 3 từ · maxLen: từ dài nhất được lấy (bảng 6×6, to ra cho vừa từ dài)
+  const findWords = (ws, more, maxLen) => () => {
+    const fit = (w) => /^[a-z]+$/.test(w) && w.length >= 2 && w.length <= maxLen;
+    const cand = U.uniq(ws).filter(fit), extra = U.uniq(more).filter((w) => fit(w) && !cand.includes(w));
     for (let tries = 0; tries < 50; tries++) {
-      const words = sample(cand, Math.min(3, cand.length));
+      // luôn có ít nhất một từ của bài; không lấy cùng lúc từ nằm trong từ khác (ox – box, fox)
+      const [first, ...rest] = shuffle(cand);
+      const words = [];
+      [first, ...shuffle([...rest, ...extra])].filter(Boolean)
+        .forEach((w) => { if (words.length < 3 && !words.some((x) => x.includes(w) || w.includes(x))) words.push(w); });
+      const N = Math.max(6, ...words.map((w) => w.length));
       const g = Array.from({ length: N }, () => Array(N).fill(''));
       const place = [];
       let ok = true;
@@ -167,15 +183,22 @@
         if (!put) { ok = false; break; }
       }
       if (!ok) continue;
-      const grid = g.map((row) => row.map((ch) => ch || AZ[U.rand(0, 25)]).join(''));
-      const pics = {};
-      words.forEach((w) => { pics[w] = E.wpic(w); });
-      return { type: 'wordsearch', grid, place, pics, answer: words, skill: 'ta.tuvung',
-        prompt: 'Find and circle: tìm các từ trong bảng chữ.', sub: 'Chạm chữ cái đầu, rồi chạm chữ cái cuối của mỗi từ (hàng ngang hoặc cột dọc).',
-        speak: [['Tìm các từ trong bảng chữ:', 'vi'], ...words.map((w) => [w, 'en'])], explain: words.map((w) => `${w} = ${W[w].vi}`).join('\n') };
+      // chữ điền ngẫu nhiên có thể tạo thêm một bản của từ (vd. "ox") → điền lại
+      for (let fillTry = 0; fillTry < 20; fillTry++) {
+        const grid = g.map((row) => row.map((ch) => ch || AZ[U.rand(0, 25)]).join(''));
+        if (words.some((w) => countIn(grid, w) !== 1)) continue;
+        const pics = {};
+        words.forEach((w) => { pics[w] = E.wpic(w); });
+        return { type: 'wordsearch', grid, place, pics, answer: words, skill: 'ta.tuvung',
+          prompt: 'Find and circle: tìm các từ trong bảng chữ.', sub: 'Chạm chữ cái đầu, rồi chạm chữ cái cuối của mỗi từ (hàng ngang hoặc cột dọc).',
+          speak: [['Tìm các từ trong bảng chữ:', 'vi'], ...words.map((w) => [w, 'en'])], explain: words.map((w) => `${w} = ${W[w].vi}`).join('\n') };
+      }
     }
     return E.spell(...ws)();
   };
+  E.findWords = (...ws) => findWords(ws, [], 6);
+  // Bài ít từ ngắn (Unit 14: sister, brother, grandmother): thêm từ ôn của Unit khác, nhận từ đến 8 chữ (bảng đến 8×8)
+  E.findWordsMore = (ws, more) => findWords(ws, more, 8);
 
   App.SkillNames = Object.assign(App.SkillNames || {}, { 'ta.noi': 'Nói (nghe mẫu rồi nói theo)' });
 })(window.App);
