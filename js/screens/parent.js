@@ -176,10 +176,11 @@
     const A = R.ability();
     const a = A[subj];
     const cards = [];
-    cards.push(h('div.subj-pick.wide', Rp.SUBJ.map((sid) => h('button.chip', {
+    cards.push(h('div.subj-pick.wide', [...Rp.SUBJ, 'code'].map((sid) => h('button.chip', {
       class: sid === subj ? 'on' : '',
       onclick: () => { App.Sound.play('tap'); subj = sid; redraw(); },
     }, `${Rp.icon(sid)} ${Rp.name(sid)}`))));
+    if (subj === 'code') return cards.concat(viewCode());
 
     const sp = Rp.speed(subj);
     cards.push(wide(`📊 Xếp loại ${Rp.name(subj)}`,
@@ -225,12 +226,45 @@
       mk.length ? h('p.muted', { style: { marginTop: '.5rem' } }, 'Bé làm lại ở nút “🔁 Ôn lại câu sai” trên trang chủ.') : null));
     return cards;
   }
+  // Đảo Lập Trình: mục tiêu là rèn tư duy logic, nên xem bé có nghĩ trước khi chạy và tự sửa được lỗi không
+  function viewCode() {
+    const Rp = P();
+    const c = App.Code.summary();
+    const levels = (App.Store.state.code || {}).levels || {};
+    const LV = { chac: ['Chắc', 'good'], dang: ['Đang học', 'ok'], chua: ['Chưa học', 'none'] };
+    const notes = [];
+    if (!c.solved) notes.push('Bé chưa chơi màn nào. Bố mẹ ngồi cùng bé ở vài màn đầu để bé hiểu cách xếp thẻ nhé.');
+    else {
+      if (c.first) notes.push(`Có ${c.first} màn bé nghĩ xong trong đầu nên đúng ngay lần chạy đầu. Đây là dấu hiệu bé đang suy luận, không phải thử bừa.`);
+      if (c.selfFix) notes.push(`Bé đã ${c.selfFix} lần tự tìm ra lỗi và sửa được mà không cần gợi ý.`);
+      if (c.solved >= 6 && c.first < c.solved * 0.3) notes.push('Bé hay bấm Chạy để thử. Bố mẹ nhắc bé chỉ tay vào bàn, đi theo từng thẻ trước khi bấm.');
+      if (c.hints > c.solved) notes.push('Bé còn dựa nhiều vào gợi ý. Bố mẹ hỏi bé: “Bạn ấy dừng ở đâu? Thẻ nào làm bạn ấy đi lệch?” trước khi bấm gợi ý.');
+      if (c.tidy >= c.solved * 0.7) notes.push('Bé thường tìm được đường ngắn nhất.');
+    }
+    const hard = Object.entries(levels).filter(([, r]) => r.fails >= 4).length;
+    if (hard) notes.push(`Có ${hard} màn bé phải chạy thử nhiều lần. Chạy thử nhiều lần là bình thường, không phải điểm yếu.`);
+    return [
+      h('div.p-card.wide', h('h3', '🤖 Lập trình'),
+        h('div.p-stats.four',
+          tile(`${c.solved}/${c.total}`, 'màn đã giải'),
+          tile(c.first, 'màn đúng ngay lần chạy đầu'),
+          tile(c.selfFix, 'lần tự sửa lỗi'),
+          tile(c.hints, 'lần dùng gợi ý')),
+        notes.map((t) => h('p.ab-note', t)),
+        h('p.muted', { style: { marginTop: '.4rem' } }, 'Không tính vào điểm các môn. Mục tiêu là rèn tư duy logic, không phải học thuộc lệnh. Chạy thử không bị trừ gì; ba sao dành cho lời giải ít thẻ nhất, không cần gợi ý.')),
+      wide('🗂️ Các thế giới',
+        h('div.topic-grid', Rp.topics('code').filter((t) => t.total).map((t) => h('div.topic-row',
+          h('div.lbl', `${t.topic.icon} ${t.topic.short}: ${t.topic.name}`, h('small', `${t.topic.idea} · ${t.done}/${t.total} chặng`)),
+          bar((t.done / t.total) * 100, 'var(--code)'),
+          chip(LV[t.level][0], LV[t.level][1]))))),
+    ];
+  }
   const mistakeRow = (m) => h('div.p-row',
     h('div.lbl', (m.q.note || [m.q.prompt, m.q.big && App.U.plain(m.q.big)].filter(Boolean).join('  ')).replace(/\n/g, ' '),
       h('small', 'Đáp án: ' + answerOf(m.q))));
 
   // ================= 📈 Tiến bộ =================
-  const CATS = [['toan', 'Toán', 'var(--toan)'], ['tv', 'Tiếng Việt', 'var(--tv)'], ['ta', 'Tiếng Anh', 'var(--ta)'],
+  const CATS = [['toan', 'Toán', 'var(--toan)'], ['tv', 'Tiếng Việt', 'var(--tv)'], ['ta', 'Tiếng Anh', 'var(--ta)'], ['code', 'Lập trình', 'var(--code)'],
     ['review', 'Ôn câu sai', 'var(--orange)'], ['pet', 'Thú cưng, sticker', 'var(--pink)'], ['other', 'Khác', '#c3c8d8']];
   const legend = (items) => h('div.legend', items.map(([, label, color]) => h('span', h('i', { style: { background: color } }), label)));
   function viewProgress() {
@@ -402,15 +436,15 @@
           draw();
         } }, '⭐'.repeat(n)));
         return h('div.task-row',
-          h('div.lbl', `${t.kind === 'read' ? '🎙️' : '✍️'} ${t.title}`, h('small', `${when(t.t)} · ${t.detail}${t.kind === 'read' && !t.audio ? ' (đọc trực tiếp, không có ghi âm)' : ''}`)),
+          h('div.lbl', `${t.ico || (t.kind === 'read' ? '🎙️' : '✍️')} ${t.title}`, h('small', `${when(t.t)} · ${t.detail}${t.kind === 'read' && !t.audio ? ' (đọc trực tiếp, không có ghi âm)' : ''}`)),
           h('div.p-actions', play, ...stars), audioBox);
       };
       return [
         h('h3', `👨‍👩‍👧 Nhiệm vụ cùng bố mẹ${pend.length ? ` · ${pend.length} bài chờ chấm` : ''}`),
         pend.length ? pend.slice(0, 8).map(row) : empty('Không có bài nào đang chờ chấm.'),
         done.length ? h('h4', 'Đã chấm gần đây') : null,
-        ...done.map((t) => h('div.p-row', h('div.lbl', `${t.kind === 'read' ? '🎙️' : '✍️'} ${t.title}`, h('small', when(t.t))), chip('⭐'.repeat(t.stars), 'good'))),
-        h('p.muted', { style: { marginTop: '.5rem' } }, 'Trong các bài Tiếng Việt, bé gửi bài đọc to (có ghi âm) và bài viết vào vở. Bố mẹ nghe, xem vở rồi chấm sao: mỗi sao bé được 3 xu. Tắt nhiệm vụ ở thẻ ⚙️ Cài đặt.'),
+        ...done.map((t) => h('div.p-row', h('div.lbl', `${t.ico || (t.kind === 'read' ? '🎙️' : '✍️')} ${t.title}`, h('small', when(t.t))), chip('⭐'.repeat(t.stars), 'good'))),
+        h('p.muted', { style: { marginTop: '.5rem' } }, 'Bé gửi bài đọc to (có ghi âm), bài viết vào vở và trò chơi lập trình không cần máy. Bố mẹ nghe, xem vở rồi chấm sao: mỗi sao bé được 3 xu. Tắt nhiệm vụ ở thẻ ⚙️ Cài đặt.'),
       ];
     });
   }
@@ -471,7 +505,7 @@
       toggle('voice', 'Giọng đọc', `Giọng Việt: ${viVoice ? 'có ✅' : 'chưa có ⚠️'} · Giọng Anh: ${enVoice ? 'có ✅' : 'chưa có ⚠️'}`),
       toggle('autoRead', 'Tự đọc đề bài', 'Máy tự đọc mỗi câu hỏi (hợp với bé đọc còn chậm)'),
       toggle('unlockAll', 'Mở khóa tất cả các chặng', 'Cho bé chọn bài bất kỳ (ví dụ bài đang học trên lớp)'),
-      toggle('parentTasks', 'Nhiệm vụ cùng bố mẹ', 'Trong bài Tiếng Việt có nhiệm vụ đọc to (ghi âm) và viết vào vở để bố mẹ chấm'),
+      toggle('parentTasks', 'Nhiệm vụ cùng bố mẹ', 'Tiếng Việt có đọc to (ghi âm), viết vào vở; Đảo Lập Trình có trò chơi không cần máy để bố mẹ chấm'),
       installRow(),
       h('div.p-row', h('div.lbl', 'Tên của bé', h('small', st.profile.name)), h('button.btn.small.white', { onclick: rename }, 'Đổi tên')),
       h('div.p-row', h('div.lbl', 'Xóa toàn bộ dữ liệu', h('small', 'Sao, xu, thú cưng, sticker sẽ mất hết')), h('button.btn.small.red', { onclick: resetAll }, 'Xóa'))));

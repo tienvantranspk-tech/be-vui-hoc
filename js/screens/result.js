@@ -19,6 +19,12 @@
         2: 'Bé làm tốt lắm, chơi lại để lấy đủ 3 sao nhé!',
         1: 'Bé đã cố gắng! Chơi lại để giỏi hơn nữa nào!',
       };
+      const code = p.subject === 'code'; // Đảo Lập Trình: sao tính theo lời giải gọn
+      if (code) {
+        subs[3] = `${st.profile.name} giải gọn hết các màn! 💯`;
+        subs[2] = 'Bé giải được hết rồi! Dùng ít thẻ hơn, không cần gợi ý là được 3 sao nhé!';
+        subs[1] = subs[2];
+      }
       const next = review ? null : R.nextStage(sub, R.key(p.subject, p.topic, p.stage));
       const title = weektext ? 'Luyện bài đọc xong! 📖' : review ? (reward.left ? 'Ôn tập xong! 💪' : 'Sửa hết lỗi rồi! 🏆') : titles[reward.stars];
       const subText = weektext ? `Bé làm đúng ngay ${p.firstTry}/${p.total} bài.` : review
@@ -30,7 +36,7 @@
         h('div.result-title', title),
         h('div.result-sub', subText),
         h('div.result-row',
-          h('span.pill', `✅ Đúng ngay: ${p.firstTry}/${p.total}`),
+          h('span.pill', `${code ? '🧹 Giải gọn' : '✅ Đúng ngay'}: ${p.firstTry}/${p.total}`),
           // chặng có xen câu nâng cao: cho bé thấy riêng số câu nâng cao làm đúng (mỗi câu được thêm 1 xu)
           p.advTotal && p.advTotal < p.total ? h('span.pill.lv', `🔥 Câu nâng cao: ${p.advFirstTry}/${p.advTotal}`) : null,
           h('span.pill.js-gain', '🪙 +', h('b', '0'))),

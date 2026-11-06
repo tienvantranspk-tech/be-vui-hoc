@@ -90,7 +90,7 @@
     w.dset[U.dayKey()] = 1;
     return w;
   };
-  // cat: bé đang dùng thời gian vào đâu – toan, tv, ta, review (ôn câu sai), pet (thú cưng, sticker), other
+  // cat: bé đang dùng thời gian vào đâu – toan, tv, ta, code (lập trình), review (ôn câu sai), pet (thú cưng, sticker), other
   R.addTime = (sec, cat = 'other') => {
     const d = R.today(), w = R.week();
     d.sec += sec;

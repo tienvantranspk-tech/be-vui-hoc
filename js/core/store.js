@@ -26,6 +26,8 @@
       counters: { fixed: 0 }, // số câu sai bé đã tự sửa được khi ôn lại
       // Nhiệm vụ cùng bố mẹ (đọc to có ghi âm, viết vào vở): { id, t, kind, title, detail, sid, audio, stars (bố mẹ chấm), seen }
       tasks: [],
+      // Đảo Lập Trình: cách bé giải từng màn. levels: id màn → { n, tidy, runs, fails, hints, selfFix, t }
+      code: { levels: {} },
       // Bài đọc tuần này do bố mẹ gõ (lấy từ sách của bé): { title, text, at }
       weekText: null,
       streak: { cur: 0, best: 0, last: null },

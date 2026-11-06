@@ -61,7 +61,7 @@
       session = { finished: false, asking: false };
       if (boss) {
         hp = hpMax = Math.max(3, Math.round(questions.length * 0.8));
-        setTimeout(() => App.UI.toast(`${boss[0]} ${boss[1]} xuất hiện! Trả lời đúng ngay để hạ ${boss[1]} nhé!`, 3200), 400);
+        setTimeout(() => App.UI.toast(`${boss[0]} ${boss[1]} xuất hiện! ${sub.unit ? 'Giải thật gọn' : 'Trả lời đúng ngay'} để hạ ${boss[1]} nhé!`, 3200), 400);
       }
       const onAnswer = boss ? (ok, first) => {
         const ico = bossEl.querySelector('.boss-ico');

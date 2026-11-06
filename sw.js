@@ -1,6 +1,6 @@
 /* Bộ nhớ đệm của app (PWA): cất sẵn toàn bộ app trong máy để mở nhanh và chơi được khi không có mạng.
    MỖI LẦN SỬA APP: tăng VERSION (ví dụ ...-2) để máy tính bảng tự tải bản mới ở lần mở sau. */
-const VERSION = 'bvh-2026-11-06-1';
+const VERSION = 'bvh-2026-11-06-2';
 const FONTS = 'bvh-fonts';
 
 // Các tệp của app (thêm tệp mới vào index.html thì nhớ thêm vào đây)
@@ -31,6 +31,8 @@ const SHELL = [
   'js/games/qtypes2.js',
   'js/games/qtypes3.js',
   'js/games/qtypes4.js',
+  'js/games/code-core.js',
+  'js/games/code-ui.js',
   'js/games/engine.js',
   'js/subjects/toan-gen.js',
   'js/subjects/toan-gen2.js',
@@ -49,6 +51,7 @@ const SHELL = [
   'js/subjects/tienganh-sach.js',
   'js/subjects/tienganh.js',
   'js/subjects/tienganh-nangcao.js',
+  'js/subjects/laptrinh.js',
   'js/screens/setup.js',
   'js/screens/home.js',
   'js/screens/map.js',

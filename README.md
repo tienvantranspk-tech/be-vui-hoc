@@ -46,6 +46,17 @@ Muốn chuyển sang máy khác thì dùng **Sao lưu dữ liệu** trong Góc p
       xếp loại từng môn, năng lực – phẩm chất, so với tiến độ ở lớp, gợi ý tuần này, biểu đồ nhiều tuần, lịch học 12 tuần,
       mục tiêu tuần, báo cáo tuần lưu thành ảnh / gửi Zalo – xem mục [Góc phụ huynh](#góc-phụ-huynh).
 - [x] **Dạng bài bám sách giáo khoa và vở bài tập** (tháng 10/2026) – xem mục [Các dạng bài](#các-dạng-bài).
+- [x] **Đảo Lập Trình, bản đầu** (tháng 11/2026) – Thế giới 1–2, 30 màn, xem mục [Đảo Lập Trình](#đảo-lập-trình).
+- [ ] **Đảo Lập Trình, phần tiếp:** Thế giới 3 Quay hướng · Thế giới 4 Vòng lặp · Thế giới 5 Bút vẽ.
+
+## Đảo Lập Trình
+
+Mục tiêu chính là rèn **tư duy logic**, không phải học thuộc lệnh. Bé xếp thẻ lệnh rồi bấm Chạy, thú cưng đi theo từng thẻ trên bàn ô.
+
+- **Ba kiểu màn:** tự xếp thẻ · sửa chương trình có lỗi · đoán ô bạn ấy sẽ dừng lại trước khi chạy.
+- **Chạy thử không bị trừ gì.** Ba sao dành cho lời giải ít thẻ nhất, không cần gợi ý. Gợi ý chỉ mở sau hai lần chạy chưa được.
+- **Không tính vào điểm các môn.** Góc phụ huynh › Theo môn › Lập trình cho biết số màn đúng ngay lần chạy đầu, số lần tự sửa lỗi, số lần dùng gợi ý.
+- **Thêm màn mới:** sửa dữ liệu trong `js/subjects/laptrinh.js` (kí hiệu bản đồ ở đầu `js/games/code-core.js`).
 
 ## Các dạng bài
 

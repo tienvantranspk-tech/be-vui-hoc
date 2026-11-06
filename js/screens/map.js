@@ -137,7 +137,7 @@
       h('div.s-stars', stars ? '⭐'.repeat(stars) + '☆'.repeat(3 - stars) : '☆☆☆'),
       stage.bonus ? h('div.s-note', '🧠 Câu hỏi khó, cần suy nghĩ kĩ · Không bắt buộc · Xu thưởng gấp đôi') : null,
       advanced ? h('div.s-note', `🔥 Có xen khoảng ${lv === 'nang-cao' ? '5' : '3'}/10 câu nâng cao (khó hơn sách giáo khoa)`) : null,
-      h('div.modal-body', `${count} câu hỏi · khoảng ${Math.max(3, Math.round(count * 0.6))} phút`));
+      h('div.modal-body', `${count} ${sub.unit || 'câu hỏi'} · khoảng ${Math.max(3, Math.round(count * (sub.unit ? 1.3 : 0.6)))} phút`));
     App.UI.modal({
       body,
       buttons: [

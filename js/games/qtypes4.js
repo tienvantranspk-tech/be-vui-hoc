@@ -309,8 +309,8 @@
       const T = q.task;
       let finished = false, recorder = null, chunks = [], blob = null, url = null, stream = null;
       const status = h('div.tk-status');
-      const card = h('div.tk-card', h('div.tk-ico', T.kind === 'read' ? '🎙️' : '✍️'), h('div.tk-body', h('b', T.title), h('p', T.detail)));
-      const send = h('button.btn.green', { type: 'button' }, T.kind === 'read' ? '📨 Gửi cho bố mẹ nghe' : '✅ Con viết xong rồi');
+      const card = h('div.tk-card', h('div.tk-ico', T.ico || (T.kind === 'read' ? '🎙️' : '✍️')), h('div.tk-body', h('b', T.title), h('p', T.detail)));
+      const send = h('button.btn.green', { type: 'button' }, T.doneLabel || (T.kind === 'read' ? '📨 Gửi cho bố mẹ nghe' : '✅ Con viết xong rồi'));
       const later = h('button.btn.white.small', { type: 'button' }, 'Để lúc khác');
       const finish = (added) => {
         if (finished) return;
@@ -361,7 +361,7 @@
       send.addEventListener('click', async () => {
         if (finished || send.disabled) return;
         send.disabled = true;
-        await App.Tasks.add({ kind: T.kind, title: T.title, detail: T.detail, sid: q._sid || 'tv' }, blob);
+        await App.Tasks.add({ kind: T.kind, title: T.title, detail: T.detail, sid: q._sid || 'tv', ico: T.ico }, blob);
         App.Sound.play('coin');
         finish(true);
       });

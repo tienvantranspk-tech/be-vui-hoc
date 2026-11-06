@@ -1,9 +1,10 @@
-/* Trang chủ: thú cưng + ba "thế giới" môn học */
+/* Trang chủ: thú cưng + các "thế giới" (ba môn học ở trường và Đảo Lập Trình) */
 (function (App) {
   'use strict';
   const { h } = App.U;
   const R = App.Rewards;
-  const SUBJECTS = ['toan', 'tv', 'ta'];
+  const SUBJECTS = ['toan', 'tv', 'ta'];   // các môn có lịch học ở lớp
+  const WORLDS = [...SUBJECTS, 'code'];
 
   App.Screens.home = {
     render() {
@@ -41,7 +42,7 @@
           h('button.btn.small.pink', { onclick: () => App.Router.go('pet') }, '🍎 Cho ăn')));
 
       // ---- Các thế giới môn học ----
-      const worlds = h('div.worlds', SUBJECTS.map((sid) => {
+      const worlds = h('div.worlds', WORLDS.map((sid) => {
         const sub = App.Curriculum[sid];
         const sum = R.summary(sub);
         const soon = sum.total === 0;
