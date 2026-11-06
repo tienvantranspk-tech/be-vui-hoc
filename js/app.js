@@ -61,10 +61,32 @@
     // Chỉ chạy khi mở qua https (đã đưa lên mạng); trên máy tính thử bằng http://localhost:5500/?pwa
     const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
     if ('serviceWorker' in navigator && location.protocol.startsWith('http') && (!local || /pwa/.test(location.search))) {
-      const hadController = !!navigator.serviceWorker.controller;
-      navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Không cài được bộ nhớ đệm', e));
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (hadController) App.UI.toast('✨ App vừa được cập nhật bản mới!', 3000);
+      const sw = navigator.serviceWorker;
+      const hadController = !!sw.controller;
+      sw.register('sw.js').catch((e) => console.warn('Không cài được bộ nhớ đệm', e));
+
+      // Bản mới đã tải xong thì chuyển sang ngay, nhưng chỉ ở trang chủ để không cắt ngang lúc bé làm bài
+      let updateReady = false;
+      const atHome = () => { const top = App.Router.top(); return !!top && top.name === 'home'; };
+      const applyUpdate = () => {
+        if (!updateReady || !atHome()) return;
+        App.UI.toast('✨ Có bản mới, app đang cập nhật…', 1500);
+        setTimeout(() => { if (atHome()) { App.Store.save(); location.reload(); } }, 1200);
+      };
+      App.Router.onShow = applyUpdate;
+      sw.addEventListener('controllerchange', () => {
+        if (!hadController) return;   // lần cài đầu tiên: trang đang mở đã là bản mới nhất
+        updateReady = true;
+        applyUpdate();
+      });
+
+      // Máy bảng thường để app chạy nền rồi quay lại: khi đó trình duyệt không tự kiểm tra bản mới
+      const CHECK_EVERY = 10 * 60 * 1000;
+      let lastCheck = Date.now();
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible' || Date.now() - lastCheck < CHECK_EVERY) return;
+        lastCheck = Date.now();
+        sw.getRegistration().then((reg) => reg && reg.update()).catch(() => {});   // mất mạng thì thôi
       });
     }
     // Nút "Cài app" trong Góc phụ huynh (Chrome trên Android báo khi app cài được)

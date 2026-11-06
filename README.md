@@ -132,7 +132,7 @@ Vào https://app.netlify.com/drop, đăng nhập rồi kéo thả cả thư mụ
 1. Sửa tệp trong thư mục này, rồi mở `sw.js` và **tăng số phiên bản** ở dòng `const VERSION = 'bvh-…'`
    (ví dụ `bvh-2026-10-14-1` → `bvh-2026-10-14-2`). Nếu thêm tệp `.js` mới vào `index.html` thì thêm cả vào danh sách trong `sw.js`.
 2. Tải các tệp đã sửa lên lại GitHub (hoặc Netlify).
-3. Trên máy tính bảng: mở app một lần khi có mạng để app tự tải bản mới. Bản mới được dùng từ lần mở tiếp theo.
+3. Trên máy tính bảng: mở app hoặc quay lại app khi có mạng. App tự tải bản mới, rồi tự chuyển sang bản đó khi bé ở trang chủ (đang làm bài thì đợi bé về trang chủ).
 
 Dữ liệu của bé không mất khi cập nhật app. Nên **sao lưu** định kỳ (Góc phụ huynh → 💾 Sao lưu dữ liệu) và cất tệp vào Zalo hoặc Google Drive.
 

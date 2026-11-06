@@ -13,6 +13,9 @@
     // Kiểm tra trước khi mở màn hình (ví dụ: hết giờ học hôm nay) → trả về tên màn hình thay thế
     guard: null,
 
+    // Gọi sau mỗi lần hiện màn hình (app.js dùng để áp dụng bản mới khi bé về trang chủ)
+    onShow: null,
+
     // Mở màn hình mới. replace: thay thế màn hình hiện tại (không thêm vào lịch sử)
     go(name, params = {}, { replace = false } = {}) {
       const alt = this.guard && this.guard(name, params);
@@ -73,6 +76,7 @@
       root.appendChild(el);
       this.currentDef = def;
       if (def.mounted) def.mounted(el, cur.params || {});
+      if (this.onShow) this.onShow();
     },
   };
 
